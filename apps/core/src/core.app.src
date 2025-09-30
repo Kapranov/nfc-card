@@ -1,13 +1,19 @@
 {application, core, [
-    {description, "An OTP application"},
+    {description, "Postgres backend for service nfc service"},
     {vsn, "0.1.0"},
     {registered, []},
     {mod, {core_app, []}},
     {applications, [
         kernel,
-        stdlib
+        stdlib,
+        pgo
     ]},
-    {env, []},
+    {env, [{db_config, #{host => "localhost",
+                         pool_size => 10,
+                         port => 5432,
+                         user => "kapranov",
+                         password => "postgres",
+                         database => "nfc_card"}}]},
     {modules, []},
     {licenses, ["Apache-2.0"]},
     {links, []}

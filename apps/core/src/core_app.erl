@@ -10,7 +10,8 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
-    core_sup:start_link().
+    {ok, DBConfig} = application:get_env(core, db_config),
+    core_sup:start_link(DBConfig).
 
 stop(_State) ->
     ok.
