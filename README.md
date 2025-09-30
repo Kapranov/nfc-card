@@ -38,53 +38,53 @@ NFC картка не є пропуском, а використовується
 Реєстрація картки в системі (робітник “пропікав” картку в зчитувачі)   
 **Example response**: `{card_uid: string, user_id: number}`
 
-`/card/assign`
-Обов’язкові поля: "user_id", "card_uid"
-Прив’язка картки до робітника
+`/card/assign`  
+Обов’язкові поля: "user_id", "card_uid"  
+Прив’язка картки до робітника  
 **Example response**: `{card_uid: string, user_id: number}`
 
-`/card/delete`
-Обов’язкові поля: "card_uid"
-Видалення картки
+`/card/delete`  
+Обов’язкові поля: "card_uid"  
+Видалення картки  
 **Example response**: `{card_uid: string, user_id: number}`
 
-`/card/list_by_user`
-Обов’язкові поля: "user_id"
-Отримати список всіх карток, що прив’язані до робітника
+`/card/list_by_user`  
+Обов’язкові поля: "user_id"  
+Отримати список всіх карток, що прив’язані до робітника  
 **Example response**: `{user_id: Array<card_uid>}`
 
-`/card/delete_all_by_user`
-Обов’язкові поля: "user_id"
-Видалення всіх карток, що прив’язані до робітника
+`/card/delete_all_by_user`  
+Обов’язкові поля: "user_id"  
+Видалення всіх карток, що прив’язані до робітника  
 **Example response**: `{user_id: Array<card_uid>}`
 
-`/work_time/set`
-Обов’язкові поля: "user_id", "start_time", "end_time", "days"
+`/work_time/set`  
+Обов’язкові поля: "user_id", "start_time", "end_time", "days"  
 Задання робочого часу робітника
 
-`/work_time/get`
-Обов’язкові поля: "user_id"
+`/work_time/get`  
+Обов’язкові поля: "user_id"  
 Отримання робочого часу робітника
 
-`/work_time/add_exclusion`
-Обов’язкові поля: "user_id", "type_exclusion", “start_datetime”, “end_datetime”
-`type_exclusion` - прийти пізніше, піти раніше, повний робочий день
+`/work_time/add_exclusion`  
+Обов’язкові поля: "user_id", "type_exclusion", “start_datetime”, “end_datetime”  
+`type_exclusion` - прийти пізніше, піти раніше, повний робочий день  
 Додати виключення в робочий графік
 
-`/work_time/get_exclusion`
-Обов’язкові поля: "user_id"
+`/work_time/get_exclusion`  
+Обов’язкові поля: "user_id"  
 Отримати всі виключення з робочого графіку
 
-`/work_time/history_by_user`
-Обов’язкові поля: "user_id"
+`/work_time/history_by_user`  
+Обов’язкові поля: "user_id"  
 Отримати історії робітника
 
-`/work_time/statistics_by_user`
-Обов’язкові поля: "user_id"
-Також можливість фільтрації даних тиждень, місяць, рік, весь період. Default: місяць
-Отримати статистику робітника
-Скільки повинен працювати, скільки пропрацював часу, скільки не допрацював часу,
-скільки разів запізнювався (без причини/по причині), скільки разів йшов раніше (без
+`/work_time/statistics_by_user`  
+Обов’язкові поля: "user_id"  
+Також можливість фільтрації даних тиждень, місяць, рік, весь період. Default: місяць  
+Отримати статистику робітника  
+Скільки повинен працювати, скільки пропрацював часу, скільки не допрацював часу,  
+скільки разів запізнювався (без причини/по причині), скільки разів йшов раніше (без  
 причини/по причині)
 
 ### 30 Sep 2025 by Oleg G.Kapranov
