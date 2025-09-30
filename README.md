@@ -41,11 +41,13 @@ NFC картка не є пропуском, а використовується
 `/card/assign`
 Обов’язкові поля: "user_id", "card_uid"
 Прив’язка картки до робітника
+
 **Example response**: `{card_uid: string, user_id: number}`
 
 `/card/delete`
 Обов’язкові поля: "card_uid"
 Видалення картки
+
 **Example response**: `{card_uid: string, user_id: number}`
 
 `/card/list_by_user`
