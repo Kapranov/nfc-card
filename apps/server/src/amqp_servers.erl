@@ -9,9 +9,9 @@
 
 -record(state, {channel, connection, queue, consumer_tag}).
 
--define(EVENTS_EXCHANGE, <<"Lahaina campus">>).
 -define(EVENTS_PAYLOADS, <<"Aloha, NFC-card!">>).
 -define(EVENTS_MESSAGES, <<"aloha_queue">>).
+-define(EVENTS_EXCHANGE, <<"lahaina">>).
 
 start_link(Args) ->
   gen_server:start_link({local, ?MODULE}, ?MODULE, Args, []).
