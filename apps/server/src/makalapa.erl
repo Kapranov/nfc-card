@@ -131,7 +131,6 @@ setup_consumer(Queue, ConsumerName) ->
 start(Queue, Exchange, Type) ->
   {ok, Conn} = amqp_connection:start(amqp_params()),
   {ok, Channel} = amqp_connection:open_channel(Conn),
-  amqp_channel:call(Channel, #'queue.declare'{queue = binary(Queue)}),
   #'exchange.declare_ok'{} = amqp_channel:call(Channel, #'exchange.declare'{exchange = binary(Exchange), type = binary(Type)}),
   #'queue.declare_ok'{queue = Queue} = amqp_channel:call(Channel, #'queue.declare'{queue = binary(Queue)}),
   #'queue.bind_ok'{} = amqp_channel:call(Channel, #'queue.bind'{queue = binary(Queue), exchange = binary(Exchange)}),

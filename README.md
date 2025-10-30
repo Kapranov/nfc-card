@@ -108,12 +108,12 @@ bash> rabbitmqadmin get queue='aloha_queue' count=2
 ```
 
 ```
+erl> makalapa:start(<<"aloha_queue">>,<<"lahaina">>,<<"fanout">>).
 erl> makalapa:send_message(<<"aloha_queue">>,<<"lahaina">>,<<"Talks slow for North Shore first-responder hub, city says">>).
 erl> makalapa:send_message(<<"aloha_queue">>,<<"lahaina">>,<<"Wahiawa sex offender to receive sentence in federal child porn case">>).
 erl> makalapa:send_message(<<"aloha_queue">>,<<"lahaina">>,<<"Maui County Council member Tasha Kama dies at 73">>).
 erl> makalapa:send_message(<<"aloha_queue">>,<<"lahaina">>,<<"Kokua Line: Where can federal workers get relief?">>).
 erl> makalapa:send_message(<<"aloha_queue">>,<<"lahaina">>,<<"Honolulu police shut down 3 Kalihi gamerooms, seize $24K in cash">>).
-erl> makalapa:start(<<"aloha_queue">>, <<"lahaina">>, <<"fanout">>).
 ```
 
 ### 30 Sep 2025 by Oleg G.Kapranov
