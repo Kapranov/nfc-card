@@ -2,18 +2,19 @@
 
 -behaviour(gen_server).
 
--export([start_link/1]).
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
+-export([code_change/3,handle_call/3,handle_cast/2,handle_info/2,init/1,start_link/5,terminate/2]).
 
 -include("./_build/default/lib/amqp_client/include/amqp_client.hrl").
 
--record(state, {channel, connection, queue, consumer_tag}).
+-record(state, {channel,connection,consumer_count,consumer_tag,exchange,queue,message_count,routing_key}).
 
+-define(HOST, "127.0.0.1").
+-define(PASSWORD, <<"guest">>).
+-define(PORT, 5672).
 -define(SERVER, ?MODULE).
--define(EVENTS_CONSUMER, <<"bisque">>).
--define(EVENTS_EXCHANGE, <<"lahaina">>).
--define(EVENTS_QUEUES, <<"aloha_queue">>).
--define(EVENTS_TYPES, <<"topic">>).
+-define(SSL, none).
+-define(TIMEOUT, 7_000).
+-define(USERNAME, <<"guest">>).
 
 binary(A) when is_atom(A) -> list_to_binary(atom_to_list(A));
 binary(L) when is_list(L) -> list_to_binary(L);
@@ -23,39 +24,40 @@ timeout_millseconds() -> 5500.
 
 amqp_params() ->
   #amqp_params_network{
-     username = <<"guest">>,
-     password = <<"guest">>,
-     port = 5672,
-     host = "127.0.0.1",
-     connection_timeout = 7000,
-     ssl_options = none
+     connection_timeout = ?TIMEOUT,
+     host = ?HOST,
+     password = ?PASSWORD,
+     port = ?PORT,
+     ssl_options = ?SSL,
+     username = ?USERNAME
   }.
 
-start_link(Args) ->
-  gen_server:start_link({local, ?MODULE}, ?MODULE, Args, []).
+start_link(Exchange,Queue,Type,RoutingKey,ConsumerName) ->
+  gen_server:start_link({local, ?MODULE}, ?MODULE, [Exchange,Queue,Type,RoutingKey,ConsumerName], []).
 
-init([]) ->
+init([Exchange,Queue,Type,RoutingKey,ConsumerName]) ->
   {ok, Connection} = amqp_connection:start(amqp_params()),
   {ok, Channel} = amqp_connection:open_channel(Connection),
-  #'exchange.declare_ok'{} = amqp_channel:call(Channel, #'exchange.declare'{exchange = ?EVENTS_EXCHANGE, type = ?EVENTS_TYPES}),
-  #'queue.declare_ok'{queue = Queue} = amqp_channel:call(Channel, #'queue.declare'{queue = ?EVENTS_QUEUES}),
-  #'queue.bind_ok'{} = amqp_channel:call(Channel, #'queue.bind'{queue = binary(Queue), exchange = ?EVENTS_EXCHANGE}),
-  {ok, #state{channel = Channel, queue = Queue}, timeout_millseconds()}.
+  #'exchange.declare_ok'{} = amqp_channel:call(Channel, #'exchange.declare'{exchange = binary(Exchange), type = binary(Type)}),
+  QueueDeclare = #'queue.declare'{queue = binary(Queue), exclusive = false},
+  #'queue.declare_ok'{queue = Queue, message_count = MessageCount, consumer_count = ConsumerCount} = amqp_channel:call(Channel, QueueDeclare),
+  #'queue.bind_ok'{} = amqp_channel:call(Channel, #'queue.bind'{queue = Queue, exchange = binary(Exchange), routing_key = binary(RoutingKey)}),
+  BasicConsume = #'basic.consume'{queue = Queue, consumer_tag = binary(ConsumerName), no_local = false, no_ack = true, exclusive = false, nowait = false},
+  #'basic.consume_ok'{consumer_tag = ConsumerTag} = amqp_channel:subscribe(Channel, BasicConsume, self()),
+  receive
+    #'basic.consume_ok'{consumer_tag = ConsumerTag} -> ok
+  end,
+  {ok, #state{
+          channel=Channel,
+          connection=Connection,
+          consumer_count=ConsumerCount,
+          consumer_tag=ConsumerTag,
+          exchange=binary(Exchange),
+          message_count=MessageCount,
+          queue=Queue,
+          routing_key=binary(RoutingKey)
+         },timeout_millseconds()}.
 
-% init(_Args) ->
-%   {ok, Conn} = amqp_connection:start(amqp_params()),
-%   {ok, Channel} = amqp_connection:open_channel(Conn),
-%   #'exchange.declare_ok'{} = amqp_channel:call(Channel, #'exchange.declare'{exchange = ?EVENTS_EXCHANGE, type = <<"fanout">>}),
-%   #'queue.declare_ok'{queue = Queue} = amqp_channel:call(Channel, #'queue.declare'{queue = ?EVENTS_MESSAGES, exclusive = false}),
-%   #'queue.bind_ok'{} = amqp_channel:call(Channel, #'queue.bind'{exchange = ?EVENTS_EXCHANGE, queue = Queue, routing_key = ?EVENTS_MESSAGES}),
-%   %#'basic.consume_ok'{consumer_tag = Tag} = amqp_channel:call(Channel, #'basic.consume'{queue = Queue}),
-%   #'basic.consume_ok'{consumer_tag = Tag} = amqp_channel:subscribe(Channel, #'basic.consume'{queue = Queue, no_ack = true}, self()),
-%   receive
-%     #'basic.consume_ok'{} -> ok
-%   end,
-%   loop(Channel),
-%   {ok, #state{queue = Queue, channel = Channel, connection = Conn, consumer_tag = Tag}}.
-%
 handle_call(_Request, _From, State) ->
   Reply = ok,
   {reply, Reply, State}.
@@ -67,9 +69,18 @@ handle_info(timeout, State) ->
   io:format(" [x] Read messages in Live'~n"),
   {noreply, State, timeout_millseconds()}.
 
-terminate(_Reason, #state{channel = Channel, consumer_tag = Tag, connection = Conn}) ->
-  amqp_channel:call(Channel,#'basic.cancel'{consumer_tag = Tag}),
-  amqp_connection:close(Conn),
+terminate(_Reason, #state{
+                      channel=Channel,
+                      connection=Connection,
+                      consumer_count=_ConsumerCount,
+                      consumer_tag=ConsumerTag,
+                      exchange=_Exchange,
+                      message_count=_MessageCount,
+                      queue=_Queue,
+                      routing_key=_RoutingKey
+                     }) ->
+  amqp_channel:call(Channel,#'basic.cancel'{consumer_tag = ConsumerTag}),
+  amqp_connection:close(Connection),
   ok.
 
 code_change(_OldVsn, State, _Extra) ->

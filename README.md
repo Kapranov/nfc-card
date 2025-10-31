@@ -116,6 +116,10 @@ erl> makalapa:send_message(<<"aloha_queue">>,<<"lahaina">>,<<"Kokua Line: Where 
 erl> makalapa:send_message(<<"aloha_queue">>,<<"lahaina">>,<<"Honolulu police shut down 3 Kalihi gamerooms, seize $24K in cash">>).
 ```
 
+```
+erl> maui:start_link(<<"aloha_queue">>,<<"lahaina">>,<<"fanout">>).
+```
+
 ### 30 Sep 2025 by Oleg G.Kapranov
 
 [1]: http://127.0.0.1:15672
