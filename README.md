@@ -117,7 +117,13 @@ erl> makalapa:send_message(<<"aloha_queue">>,<<"lahaina">>,<<"Honolulu police sh
 ```
 
 ```
-erl> maui:start_link(<<"aloha_queue">>,<<"lahaina">>,<<"fanout">>).
+erl> maui:start_link(<<"lahaina">>,<<"aloha_queue">>,<<"fanout">>,<<"aloha_queue">>,<<"bisque">>).
+erl> maui:publish(<<"Honolulu police shut down 3 Kalihi gamerooms, seize $24K in cash">>).
+erl> maui:publish(<<"Talks slow for North Shore first-responder hub, city says">>).
+erl> maui:publish(<<"Wahiawa sex offender to receive sentence in federal child porn case">>).
+erl> maui:publish(<<"Maui County Council member Tasha Kama dies at 73">>).
+erl> maui:publish(<<"Kokua Line: Where can federal workers get relief?">>).
+erl> maui:publish(<<"Honolulu police shut down 3 Kalihi gamerooms, seize $24K in cash">>).
 ```
 
 ### 30 Sep 2025 by Oleg G.Kapranov
