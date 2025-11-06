@@ -1,4 +1,5 @@
 -module(maui_client).
+-author('Oleg G.Kapranov').
 
 -behaviour(gen_server).
 
@@ -15,6 +16,9 @@
 -define(SSL,none).
 -define(TIMEOUT,7_000).
 -define(USERNAME,<<"guest">>).
+-define(DBG(F, A), io:format("DBG: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
+-define(ERR(F, A), io:format("***ERR***: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
+-define(INFO(F, A), io:format("===INFO===: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
 
 binary(A) when is_atom(A) -> list_to_binary(atom_to_list(A));
 binary(L) when is_list(L) -> list_to_binary(L);
@@ -33,6 +37,7 @@ amqp_params() ->
   }.
 
 start_link(Queue,ConsumerTag) ->
+  ?INFO("Starting: ~p ~p", [Queue,ConsumerTag]),
   gen_server:start_link({local,?SERVER},?SERVER,[binary(Queue),binary(ConsumerTag)],[]).
 
 stop() -> gen_server:call(?SERVER,stop,infinity).
@@ -42,12 +47,16 @@ fetch() ->
 
 init([Queue,ConsumerTag]) ->
   process_flag(trap_exit,true),
+  ?DBG("~nQueue:       ~p" "~nConsumerTag: ~p" "~n",[Queue,ConsumerTag]),
   {ok,Connection}=amqp_connection:start(amqp_params()),
   {ok,Channel}=amqp_connection:open_channel(Connection),
   {ok,#state{connection=Connection,channel=Channel,consumer_tag=ConsumerTag,queue=Queue},timeout_millseconds()}.
 
-handle_call(stop,_From,State) -> {stop,normal,ok,State};
+handle_call(stop,_From,State) ->
+  ?DBG("Stop: ~p", [State]),
+  {stop,normal,ok,State};
 handle_call(fetch,_From,State) ->
+  ?DBG("Fetch: ~p", [State]),
   BasicConsume=#'basic.consume'{queue=State#state.queue,consumer_tag=State#state.consumer_tag,no_ack=true},
   #'basic.consume_ok'{consumer_tag=ConsumerTag}=amqp_channel:subscribe(State#state.channel,BasicConsume,self()),
   retrieve(State#state.channel),
@@ -58,30 +67,32 @@ handle_call(_Request,_From,State) -> {reply,ok,State}.
 
 handle_cast(_Msg,State) -> {noreply,State}.
 
-handle_info({#'basic.consume'{},_Pid},State) -> {noreply,State};
-handle_info(#'basic.consume_ok'{},State) -> {noreply,State};
-handle_info(#'basic.cancel'{},State) -> {noreply,State};
-handle_info(#'basic.cancel_ok'{},State) -> {noreply,State};
-handle_info(fetch,State) -> {noreply,State};
+handle_info(#'basic.cancel_ok'{},State) ->
+  ?DBG("ConsumerTag Cancel: ~p", [State#state.consumer_tag]),
+  {noreply,State};
 handle_info(timeout,State) ->
-  io:format("Connected by Queue: ~p~n", [State#state.queue]),
+  ?DBG("Timeout: ~p", [State]),
   {noreply,State,timeout_millseconds()};
 handle_info(Info, State) ->
-  io:format("unexpected info: ~p~n", [Info]),
-  {noreply, State}.
+  ?DBG("Handle Info noreply: ~p, ~p", [Info,State]),
+  {noreply,State}.
 
-terminate(_Reason, #state{connection=Connection,channel=Channel}) ->
+terminate(_Reason,#state{connection=Connection,channel=Channel}) ->
+  ?DBG("Close Channel/Connection: ~p, ~p", [Connection,Channel]),
   ok = amqp_channel:close(Channel),
   ok = amqp_connection:close(Connection),
   ok;
-terminate(_Reason,_State) -> ok.
+terminate(Reason,State) ->
+  ?DBG("Terminate: ~p, ~p", [Reason,State]),
+  ok.
 
-
-code_change(_OldVsn,State,_Extra) -> {ok,State}.
+code_change(OldVsn,State,Extra) ->
+  ?DBG("Code Change: ~p, ~p, ~p", [OldVsn,State,Extra]),
+  {ok,State}.
 
 retrieve(Channel) ->
   receive
-    {#'basic.deliver'{delivery_tag=DeliveryTag},Content} ->
+    {#'basic.deliver'{delivery_tag=_DeliveryTag},Content} ->
       #'amqp_msg'{payload=Payload}=Content,
       io:format("Received message: ~p~n",[binary_to_list(Payload)]),
       retrieve(Channel);
@@ -89,5 +100,5 @@ retrieve(Channel) ->
       retrieve(Channel)
     after 1000 ->
       io:format("~n"),
-      io:format("Message timeout exceeded ~n")
+      io:format("Time out in seconds has been reached ~n~n")
   end.
