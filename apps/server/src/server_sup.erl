@@ -12,10 +12,10 @@
 -export([init/1]).
 
 -define(SERVER,?MODULE).
--define(CONSUMER,<<"bisque">>).
--define(EXCHANGE,<<"lahaina">>).
--define(QUEUE,<<"aloha_queue">>).
--define(ROUTING,<<"aloha_queue">>).
+-define(CONSUMER,<<"test-bisque">>).
+-define(EXCHANGE,<<"test-lahaina">>).
+-define(QUEUE,<<"test-aloha">>).
+-define(ROUTING,<<"test-mahalo">>).
 -define(TYPE,<<"fanout">>).
 
 start_link() ->

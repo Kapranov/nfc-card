@@ -48,6 +48,7 @@ init([Exchange,Queue,Type,RoutingKey,ConsumerTag]) ->
   QueueDeclare=#'queue.declare'{queue=binary(Queue),exclusive=false,auto_delete=false,durable=false},
   #'queue.declare_ok'{queue=Queue,message_count=MessageCount,consumer_count=ConsumerCount}=amqp_channel:call(Channel,QueueDeclare),
   #'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=binary(Exchange),routing_key=binary(RoutingKey)}),
+  io:format(" [*] Waiting for messages. To exit press CTRL+C~n"),
   {ok, #state{
           channel=Channel,
           connection=Connection,
@@ -64,12 +65,15 @@ handle_call(_Request,_From,State) -> {reply,ok,State}.
 
 handle_cast({publish,Message},State) ->
   BasicPublish=#'basic.publish'{exchange=State#state.exchange,routing_key=State#state.routing_key},
-  ok=amqp_channel:cast(State#state.channel,BasicPublish,#'amqp_msg'{payload=binary(Message)}),
+  Props = #'P_basic'{delivery_mode = 2},
+  ok=amqp_channel:cast(State#state.channel,BasicPublish,#'amqp_msg'{props=Props,payload=binary(Message)}),
   {noreply,State};
 handle_cast(_Msg,State) -> {noreply,State}.
 
 handle_info(timeout,State) ->
-  amqp_channel:cast(State#state.channel,#'basic.publish'{exchange=State#state.exchange,routing_key=State#state.routing_key},#amqp_msg{payload=?MESSAGE}),
+  Props=#'P_basic'{delivery_mode=2},
+  Msg=#'amqp_msg'{props=Props,payload=?MESSAGE},
+  amqp_channel:cast(State#state.channel,#'basic.publish'{exchange=State#state.exchange,routing_key=State#state.routing_key},Msg),
   io:format(" [x] HW Star-Bulletin 'An alternate Mauna Kea sites by Andrew Gomes'~n"),
   io:format("Connected by Exchange: ~p~n", [State#state.exchange]),
   {noreply,State,timeout_millseconds()};
