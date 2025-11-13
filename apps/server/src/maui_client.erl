@@ -122,54 +122,72 @@ retrieve(Channel) ->
 
 %%%_* Tests ============================================================
 -ifdef(TEST).
--include_lib("common_test/include/ct.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
 basic_test() ->
-  %Daddy    = self(),
-  Durable   = true,
-  Exchange  = <<"test_exchange">>,
-  Queue     = <<"test_queue">>,
-  RK        = <<"test_routing_key">>,
-  Type      = <<"direct">>,
-  Exchanges = [{Exchange,Type,Durable}],
-  declare_exchanges(Exchanges,Queue,RK),
-  wait_for_connections(),
-  basic_dataset(),
+  ConsumerTag = <<"test_customer_tag">>,
+  Daddy       = self(),
+  Durable     = true,
+  Msg         = <<"Kokua Line: Is random call from health survey legit?">>,
+  Queue       = <<"test_queue">>,
+  RK          = <<"test_routing_key">>,
+  Type        = <<"direct">>,
+  Exchange    = <<"test_exchange">>,
+  Exchanges   = [{Exchange,Type,Durable}],
+  ok=declare_exchanges(Exchanges,Queue,RK),
+  ok=declare_publish(Exchanges,Msg,RK),
+  ok=wait_for_connections(100),
+  ok=declare_customer(Daddy,Queue,ConsumerTag),
+  ok=wait_for_connections(1_000),
+  [<<131,97,1>>,<<131,97,2>>,<<131,97,3>>,<<131,97,4>>] = basic_dataset(),
   ok.
 
 declare_exchanges(Exchanges,Queue,RK) ->
   {ok,Connection} = amqp_connection:start(amqp_params()),
   {ok,Channel} = amqp_connection:open_channel(Connection),
   [#'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{exchange=Name,type=Type,durable=Durable}) || {Name,Type,Durable} <- Exchanges],
-  QueueDeclare=#'queue.declare'{queue=Queue,exclusive=false,auto_delete=false,durable=false},
-  #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
-  [#'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
+  ok = declare_queue(Channel,Exchanges,Queue,RK),
   amqp_channel:close(Channel),
   amqp_connection:close(Connection),
   ok.
 
-% declare_queue(Queue) ->
-%   ok
-%
-% declare_publish(Exchange, Msg, RKey) ->
-%   {ok, Connection} = amqp_connection:start(network, #amqp_params{}),
-%   {ok, Channel} = amqp_connection:open_channel(Connection),
-%   Publish = #'basic.publish'{exchange = Exchange, routing_key = RKey},
-%   amqp_channel:call(Channel, Publish, #amqp_msg{payload = term_to_binary(Msg)}),
-%   amqp_channel:close(Channel),
-%   amqp_connection:close(Connection),
-%   ok.
+declare_queue(Channel,Exchanges,Queue,RK) ->
+  QueueDeclare=#'queue.declare'{queue=Queue,exclusive=false,auto_delete=false,durable=false},
+  #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
+  [#'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
+  ok.
+
+declare_publish(Exchanges,Msg,RK) ->
+  {ok,Connection}=amqp_connection:start(amqp_params()),
+  {ok,Channel}=amqp_connection:open_channel(Connection),
+  [Publish] = [#'basic.publish'{exchange=element(1,E),routing_key=RK} || E <- Exchanges],
+  amqp_channel:call(Channel,Publish,#amqp_msg{payload=Msg}),
+  amqp_channel:close(Channel),
+  amqp_connection:close(Connection),
+  ok.
+
+declare_customer(Daddy,Queue,ConsumerTag) ->
+  {ok,Connection} = amqp_connection:start(amqp_params()),
+  {ok,Channel} = amqp_connection:open_channel(Connection),
+  BasicConsume=#'basic.consume'{queue=Queue,consumer_tag=ConsumerTag,no_ack=true},
+  #'basic.consume_ok'{consumer_tag=Tag}=amqp_channel:subscribe(Channel,BasicConsume,Daddy),
+  io:format("Got subscription notification...~p~n", [Tag]),
+  retrieve(Channel),
+  BasicCancel=#'basic.cancel'{consumer_tag=Tag},
+  #'basic.cancel_ok'{consumer_tag=Tag}=amqp_channel:call(Channel,BasicCancel),
+  amqp_channel:close(Channel),
+  amqp_connection:close(Connection),
+  ok.
 
 basic_dataset() ->
   [term_to_binary(Term) || Term <- [1, 2, 3, 4]].
 
-wait_for_connections() ->
+wait_for_connections(Num) ->
   case [] == 0 of
-    true  -> timer:sleep(100),
-             wait_for_connections();
+    true  -> timer:sleep(Num),
+             wait_for_connections(Num);
     false -> ok
   end.
 -else.
 -endif.
-%%%
+%%%_* Tests ============================================================
