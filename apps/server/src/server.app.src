@@ -1,15 +1,35 @@
-{application, server, [
-    {description, "An OTP application"},
-    {vsn, "0.1.0"},
-    {registered, []},
-    {mod, {server_app, []}},
-    {applications, [
-        kernel,
-        stdlib,
-        core
-    ]},
-    {env, []},
-    {modules, []},
-    {licenses, ["Apache-2.0"]},
-    {links, []}
- ]}.
+{application,server,
+  [ {description,"An OTP application"}
+  , {vsn,"0.1.0"}
+  , {registered,[]}
+  , {mod,{server_app,[]}}
+  , {applications,[kernel,stdlib,core]}
+  , {env,[{brokers,[{network
+                    ,[{username,<<"guest">>}
+                    , {password,<<"guest">>}
+                    , {virtual_host,<<"/">>}
+                    , {host,"localhost"}
+                    , {port,5672}]}
+                    ,
+                    {network
+                    ,[{username,<<"foo">>}
+                    , {password,<<"foo">>}
+                    , {virtual_host,<<"/">>}
+                    , {host,"localhost"}
+                    , {port,5672}]}
+                    ,
+                    {direct
+                     ,[{username,<<"foo">>}
+                     , {virtual_host,<<"/">>}
+                     , {node,'rabbit@localhost'}
+                      ]
+                    }
+                   ]
+          }
+         ]
+    }
+  , {modules,[]}
+  , {licenses,["Apache-2.0"]}
+  , {links, []}
+  ]
+}.

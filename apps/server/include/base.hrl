@@ -10,7 +10,7 @@
 -define(DBG(F, A), io:format("DBG: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
 -define(ERR(F, A), io:format("***ERR***: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
 -define(INFO(F, A), io:format("===INFO===: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
--record(maui_client,{channel,connection,consumer_tag,queue}).
+-record(maui_client,{channel,connection,consumer_tag,continuations=dict:new(),correlation_id=make_ref(),message_id=0,queue}).
 -record(base_amqp_deliver, { pid
                              , consumer_tag
                              , delivery_tag

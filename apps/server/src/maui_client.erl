@@ -3,7 +3,20 @@
 
 -behaviour(gen_server).
 
--export([code_change/3,handle_call/3,handle_cast/2,handle_info/2,init/1,start_link/2,stop/0,terminate/2,fetch/0,uuid/0]).
+-export([binary/1
+        ,code_change/3
+        ,fetch/0
+        ,handle_call/3
+        ,handle_cast/2
+        ,handle_info/2
+        ,init/1
+        ,off/0
+        ,ref_to_string/0
+        ,start_link/2
+        ,stop/0
+        ,terminate/2
+        ,uuid/0
+        ]).
 
 -include("./_build/default/lib/amqp_client/include/amqp_client.hrl").
 -include("./apps/server/include/base.hrl").
@@ -18,6 +31,11 @@ uuid() ->
   {A, B, C} = erlang:time(),
   <<A:32, B:32, C:32>>.
 
+ref_to_string() ->
+  Idx = make_ref(),
+  ListIdx = ref_to_list(Idx),
+  list_to_bitstring(ListIdx).
+
 amqp_params() ->
   #amqp_params_network{
      connection_timeout=?TIMEOUT,
@@ -28,20 +46,25 @@ amqp_params() ->
      username=?USERNAME
   }.
 
-start_link(Queue,ConsumerTag) ->
-  ?INFO("Starting: ~p ~p", [Queue,ConsumerTag]),
-  gen_server:start_link({local,?SERVER},?SERVER,[binary(Queue),binary(ConsumerTag)],[]).
+start_link(Queue,ConsumerTag)
+    when is_binary(Queue) and is_binary(ConsumerTag) ->
+      ?INFO("Starting: ~p ~p", [Queue,ConsumerTag]),
+      {ok, Pid} = gen_server:start_link({local,?SERVER},?SERVER,[Queue,ConsumerTag],[]),
+      io:format("Server started with Pid: ~p~n", [Pid]).
 
 stop() -> gen_server:call(?SERVER,stop,infinity).
+
+off() ->
+  init:stop(),
+  halt().
 
 fetch() -> gen_server:call(?SERVER,fetch).
 
 init([Queue,ConsumerTag]) ->
-  %process_flag(trap_exit,true),
   ?DBG("~nQueue:       ~p" "~nConsumerTag: ~p" "~n",[Queue,ConsumerTag]),
   {ok,Connection}=amqp_connection:start(amqp_params()),
   {ok,Channel}=amqp_connection:open_channel(Connection),
-  {ok,#maui_client{connection=Connection,channel=Channel,consumer_tag=ConsumerTag,queue=Queue},timeout_millseconds()}.
+  {ok,#maui_client{channel=Channel,connection=Connection,consumer_tag=ConsumerTag,message_id=0+1,queue=Queue}}.
 
 handle_call(stop,_From,State) ->
   ?DBG("Stop: ~p", [State]),
@@ -87,8 +110,7 @@ code_change(OldVsn,State,Extra) ->
 
 retrieve(Channel) ->
   receive
-    {#'basic.deliver'{delivery_tag=_DeliveryTag},Content} ->
-      #'amqp_msg'{payload=Payload}=Content,
+    {#'basic.deliver'{consumer_tag=_ConsumerTag,delivery_tag=_DeliveryTag,exchange=_Exchange,routing_key=_RoutingKey},#'amqp_msg'{payload=Payload,props=_Props}} ->
       io:format(" [x] Received message: ~p~n",[binary_to_list(Payload)]),
       retrieve(Channel);
     _Others ->
@@ -97,3 +119,57 @@ retrieve(Channel) ->
       io:format("~n"),
       io:format("Time out in seconds has been reached ~n~n")
   end.
+
+%%%_* Tests ============================================================
+-ifdef(TEST).
+-include_lib("common_test/include/ct.hrl").
+-include_lib("eunit/include/eunit.hrl").
+
+basic_test() ->
+  %Daddy    = self(),
+  Durable   = true,
+  Exchange  = <<"test_exchange">>,
+  Queue     = <<"test_queue">>,
+  RK        = <<"test_routing_key">>,
+  Type      = <<"direct">>,
+  Exchanges = [{Exchange,Type,Durable}],
+  declare_exchanges(Exchanges,Queue,RK),
+  wait_for_connections(),
+  basic_dataset(),
+  ok.
+
+declare_exchanges(Exchanges,Queue,RK) ->
+  {ok,Connection} = amqp_connection:start(amqp_params()),
+  {ok,Channel} = amqp_connection:open_channel(Connection),
+  [#'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{exchange=Name,type=Type,durable=Durable}) || {Name,Type,Durable} <- Exchanges],
+  QueueDeclare=#'queue.declare'{queue=Queue,exclusive=false,auto_delete=false,durable=false},
+  #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
+  [#'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
+  amqp_channel:close(Channel),
+  amqp_connection:close(Connection),
+  ok.
+
+% declare_queue(Queue) ->
+%   ok
+%
+% declare_publish(Exchange, Msg, RKey) ->
+%   {ok, Connection} = amqp_connection:start(network, #amqp_params{}),
+%   {ok, Channel} = amqp_connection:open_channel(Connection),
+%   Publish = #'basic.publish'{exchange = Exchange, routing_key = RKey},
+%   amqp_channel:call(Channel, Publish, #amqp_msg{payload = term_to_binary(Msg)}),
+%   amqp_channel:close(Channel),
+%   amqp_connection:close(Connection),
+%   ok.
+
+basic_dataset() ->
+  [term_to_binary(Term) || Term <- [1, 2, 3, 4]].
+
+wait_for_connections() ->
+  case [] == 0 of
+    true  -> timer:sleep(100),
+             wait_for_connections();
+    false -> ok
+  end.
+-else.
+-endif.
+%%%

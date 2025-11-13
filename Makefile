@@ -15,7 +15,7 @@ get-deps:
 		@$(REBAR) get-deps
 
 test:
-		@$(REBAR) skip_deps=true eunit
+		@$(REBAR) eunit --sys_config ./config/test.config
 
 run:
 		@echo "nfc_card - compile and run in shell ..."
