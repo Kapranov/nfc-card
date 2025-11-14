@@ -142,7 +142,10 @@ basic_test() ->
   [<<131,97,1>>,<<131,97,2>>,<<131,97,3>>,<<131,97,4>>] = basic_dataset(),
   ok.
 
-declare_exchanges(Exchanges,Queue,RK) ->
+declare_exchanges(Exchanges,Queue,RK)
+  when is_list(Exchanges) ,
+       is_binary(Queue),
+       is_binary(RK) ->
   {ok,Connection} = amqp_connection:start(amqp_params()),
   {ok,Channel} = amqp_connection:open_channel(Connection),
   [#'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{exchange=Name,type=Type,durable=Durable}) || {Name,Type,Durable} <- Exchanges],
@@ -151,13 +154,20 @@ declare_exchanges(Exchanges,Queue,RK) ->
   amqp_connection:close(Connection),
   ok.
 
-declare_queue(Channel,Exchanges,Queue,RK) ->
+declare_queue(Channel,Exchanges,Queue,RK)
+  when is_pid(Channel),
+       is_list(Exchanges),
+       is_binary(Queue),
+       is_binary(RK) ->
   QueueDeclare=#'queue.declare'{queue=Queue,exclusive=false,auto_delete=false,durable=false},
   #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
   [#'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
   ok.
 
-declare_publish(Exchanges,Msg,RK) ->
+declare_publish(Exchanges,Msg,RK)
+  when is_list(Exchanges) ,
+       is_binary(Msg),
+       is_binary(RK) ->
   {ok,Connection}=amqp_connection:start(amqp_params()),
   {ok,Channel}=amqp_connection:open_channel(Connection),
   [Publish] = [#'basic.publish'{exchange=element(1,E),routing_key=RK} || E <- Exchanges],
@@ -166,7 +176,10 @@ declare_publish(Exchanges,Msg,RK) ->
   amqp_connection:close(Connection),
   ok.
 
-declare_customer(Daddy,Queue,ConsumerTag) ->
+declare_customer(Daddy,Queue,ConsumerTag)
+  when is_pid(Daddy),
+       is_binary(Queue),
+       is_binary(ConsumerTag) ->
   {ok,Connection} = amqp_connection:start(amqp_params()),
   {ok,Channel} = amqp_connection:open_channel(Connection),
   BasicConsume=#'basic.consume'{queue=Queue,consumer_tag=ConsumerTag,no_ack=true},
