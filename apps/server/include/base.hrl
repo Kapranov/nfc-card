@@ -1,5 +1,6 @@
 -ifndef(_BASE_AMQP_HRL_).
 -define(_BASE_AMQP_HRL_, true).
+-define(CONTENT_TYPE,<<"application/text">>).
 -define(HOST,"127.0.0.1").
 -define(PASSWORD,<<"guest">>).
 -define(PORT,5672).
