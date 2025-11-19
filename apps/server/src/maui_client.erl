@@ -159,7 +159,7 @@ declare_queue(Channel,Exchanges,Queue,RK)
        is_list(Exchanges),
        is_binary(Queue),
        is_binary(RK) ->
-  QueueDeclare=#'queue.declare'{queue=Queue,exclusive=false,auto_delete=false,durable=false},
+  QueueDeclare=#'queue.declare'{queue=Queue,exclusive=false,auto_delete=false,durable=true},
   #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
   [#'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
   ok.
