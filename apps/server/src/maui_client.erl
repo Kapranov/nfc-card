@@ -111,7 +111,9 @@ code_change(OldVsn,State,Extra) ->
 retrieve(Channel) ->
   receive
     {#'basic.deliver'{consumer_tag=_ConsumerTag,delivery_tag=_DeliveryTag,exchange=_Exchange,routing_key=_RoutingKey},#'amqp_msg'{payload=Payload,props=_Props}} ->
-      io:format(" [x] Received message: ~p~n",[binary_to_list(Payload)]),
+      io:format(" [x] JsonBinary received message: ~p~n",[Payload]),
+      Message = "Basic return\nPayload: ~p~n",
+      io:format(Message, [jsx:decode(Payload)]),
       retrieve(Channel);
     _Others ->
       retrieve(Channel)
@@ -170,7 +172,7 @@ declare_publish(Exchanges,Msg,RK)
        is_binary(RK) ->
   {ok,Connection}=amqp_connection:start(amqp_params()),
   {ok,Channel}=amqp_connection:open_channel(Connection),
-  [Publish] = [#'basic.publish'{exchange=element(1,E),routing_key=RK} || E <- Exchanges],
+  [Publish] = [#'basic.publish'{exchange=element(1,E),mandatory=true,routing_key=RK} || E <- Exchanges],
   amqp_channel:call(Channel,Publish,#amqp_msg{payload=Msg}),
   amqp_channel:close(Channel),
   amqp_connection:close(Connection),
