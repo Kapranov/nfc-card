@@ -1,0 +1,3 @@
+-define(VAR_REGEX, "{{\\s*([A-Za-z0-9_\.]+)\\s*}}").
+-define(VAR_INDEX_REGEX, "{([0-9]+)}").
+-define(DEFAULT_MAX_TEXT_CHARS, 200).
