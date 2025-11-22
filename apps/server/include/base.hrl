@@ -13,17 +13,33 @@
 -define(TIMEOUT,7_000).
 -define(USERNAME,<<"guest">>).
 -define(_BASE_AMQP_HRL_, true).
--record(maui_client,{channel,connection,consumer_tag,continuations=dict:new(),correlation_id=make_ref(),message_id=0,queue}).
--record(base_amqp_deliver, { pid
-                             , consumer_tag
-                             , delivery_tag
-                             , exchange
-                             , routing_key
-                             , payload
-                             , reply_to
-                             , correlation_id
-                             , message_id
-                             }).
+-record(maui_client,{channel :: pid()
+                    ,connection :: pid()
+                    ,consumer_tag :: string()
+                    ,continuations=dict:new()
+                    ,correlation_id=make_ref()
+                    ,message_id=0
+                    ,queue :: string()
+                    }).
+-record(maui_server,{channel :: pid()
+                    ,connection :: pid()
+                    ,consumer_count :: integer()
+                    ,consumer_tag :: string()
+                    ,exchange :: string()
+                    ,queue :: string()
+                    ,message_count :: integer()
+                    ,routing_key :: string()
+                    }).
+-record(base_amqp_deliver,{pid :: pid()
+                          ,consumer_tag :: string()
+                          ,delivery_tag :: non_neg_integer()
+                          ,exchange :: string()
+                          ,routing_key :: string()
+                          ,payload :: map()
+                          ,reply_to :: string()
+                          ,correlation_id :: string()
+                          ,message_id :: string()
+                          }).
 
 -record(base_amqp_ack, {delivery_tag}).
 -endif.

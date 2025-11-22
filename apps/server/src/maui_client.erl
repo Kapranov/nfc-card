@@ -1,5 +1,5 @@
 -module(maui_client).
--author('Oleg G.Kapranov').
+-author("Oleg G.Kapranov <lugatex@yahoo.com>").
 
 -behaviour(gen_server).
 
