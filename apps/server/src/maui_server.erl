@@ -20,6 +20,10 @@
 
 -record(state,{channel,connection,consumer_count,consumer_tag,exchange,queue,message_count,routing_key}).
 
+generate_age() -> fakerl:random(0,99).
+generate_city() -> fakerl:random_city().
+generate_name() -> fakerl:random_name().
+
 binary(A) when is_atom(A) -> list_to_binary(atom_to_list(A));
 binary(L) when is_list(L) -> list_to_binary(L);
 binary(B) when is_binary(B) -> B.
@@ -93,7 +97,8 @@ handle_info(timeout,#state{channel=Channel,exchange=Exchange,routing_key=RK}=Sta
   Props=#'P_basic'{delivery_mode=?PERSISTENT_DELIVERY,content_type=?CONTENT_TYPE},
   Msg=#'amqp_msg'{props=Props,payload=jsx:encode(?MESSAGE)},
   amqp_channel:cast(Channel,#'basic.publish'{exchange=Exchange,mandatory=true,routing_key=RK},Msg),
-  Term=#{name => <<"Alice">>,age => 30,city => <<"New York">>},
+  Term=#{age => generate_age(),city => generate_city(), name => generate_name()},
+  %Term=#{name => <<"Alice">>,age => 30,city => <<"New York">>},
   io:format("~s~n", [jsx:encode(Term)]),
   {noreply,State,timeout_millseconds()};
 handle_info(Info,State) ->

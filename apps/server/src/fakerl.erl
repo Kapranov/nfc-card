@@ -3,9 +3,6 @@
 
 -include("./apps/server/include/fakerl.hrl").
 
-%#{name => <<"Alice">>,age => 30,city => <<"New York">>},
-%-export([age/0,city/0,name/0]).
-
 -export([random/1
         ,random/2
         ,random_city/0
