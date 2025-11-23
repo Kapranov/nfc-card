@@ -21,21 +21,33 @@
 -include("./_build/default/lib/amqp_client/include/amqp_client.hrl").
 -include("./apps/server/include/base.hrl").
 
+-spec binary(atom() | list() | binary()) -> binary().
 binary(A) when is_atom(A) -> list_to_binary(atom_to_list(A));
 binary(L) when is_list(L) -> list_to_binary(L);
 binary(B) when is_binary(B) -> B.
 
+-spec timeout_millseconds() -> non_neg_integer().
 timeout_millseconds() -> 5_500.
 
+-spec uuid() -> binary().
 uuid() ->
   {A, B, C} = erlang:time(),
   <<A:32, B:32, C:32>>.
 
+-spec ref_to_string() -> bitstring().
 ref_to_string() ->
   Idx = make_ref(),
   ListIdx = ref_to_list(Idx),
   list_to_bitstring(ListIdx).
 
+-spec amqp_params() -> #amqp_params_network{
+                          connection_timeout :: non_neg_integer(),
+                          host :: string(),
+                          password :: string(),
+                          port :: non_neg_integer(),
+                          ssl_options :: atom(),
+                          username :: string()
+                         }.
 amqp_params() ->
   #amqp_params_network{
      connection_timeout=?TIMEOUT,
@@ -46,26 +58,34 @@ amqp_params() ->
      username=?USERNAME
   }.
 
+-spec start_link(
+        Queue::string(),
+        ConsumerTag::string()) -> {ok,pid()} | ignore | {error,{already_started,pid()}}.
 start_link(Queue,ConsumerTag)
-    when is_binary(Queue) and is_binary(ConsumerTag) ->
+    when is_binary(Queue); is_binary(ConsumerTag) ->
       ?INFO("Starting: ~p ~p", [Queue,ConsumerTag]),
       {ok, Pid} = gen_server:start_link({local,?SERVER},?SERVER,[Queue,ConsumerTag],[]),
       io:format("Server started with Pid: ~p~n", [Pid]).
 
+-spec stop() -> {reply,atom(),map()} | {reply,atom(),map(),non_neg_integer()} | no_return() | {noreply,map(),non_neg_integer()} | {stop,atom(),atom(),map()} | {stop,atom(),map()}.
 stop() -> gen_server:call(?SERVER,stop,infinity).
 
+-spec off() -> no_return().
 off() ->
   init:stop(),
   halt().
 
+-spec fetch() -> {reply,atom(),map()} | {reply,atom(),map(),non_neg_integer()} | no_return() | {noreply,map(),non_neg_integer()} | {stop,atom(),atom(),map()} | {stop,atom(),map()}.
 fetch() -> gen_server:call(?SERVER,fetch).
 
+-spec init(list()) -> {ok,map()} | {ok,map(),non_neg_integer} | ignore | {stop,atom()}.
 init([Queue,ConsumerTag]) ->
   ?DBG("~nQueue:       ~p" "~nConsumerTag: ~p" "~n",[Queue,ConsumerTag]),
   {ok,Connection}=amqp_connection:start(amqp_params()),
   {ok,Channel}=amqp_connection:open_channel(Connection),
   {ok,#maui_client{channel=Channel,connection=Connection,consumer_tag=ConsumerTag,message_id=0+1,queue=Queue}}.
 
+-spec handle_call(atom(),atom(),map()) -> {reply,atom(),map()} | {reply,atom(),map(),non_neg_integer()} | no_return() | {noreply,map(),non_neg_integer()} | {stop,atom(),atom(),map()} | {stop,atom(),map()}.
 handle_call(stop,_From,State) ->
   ?DBG("Stop: ~p", [State]),
   {stop,normal,ok,State};
@@ -81,8 +101,10 @@ handle_call(fetch,_From,State) ->
 handle_call(_Request,_From,State) ->
   {reply,ok,State}.
 
+-spec handle_cast(tuple(),map()) -> no_return() | {noreply,map(),non_neg_integer()} | {stop,atom(),map()}.
 handle_cast(_Msg,State) -> {noreply,State}.
 
+-spec handle_info(atom(),map()) -> no_return() | {noreply,map(),non_neg_integer()} | {stop,atom(),map()}.
 handle_info(#'basic.cancel_ok'{},State) ->
   ?DBG("ConsumerTag Cancel: ~p", [State#maui_client.consumer_tag]),
   {noreply,State};
@@ -93,6 +115,7 @@ handle_info(Info, State) ->
   ?DBG("Handle Info noreply: ~p, ~p", [Info,State]),
   {noreply,State}.
 
+-spec terminate(any(),map()) -> ok.
 terminate(_Reason,#maui_client{connection=Connection,channel=Channel}) ->
   ?DBG("Close Channel/Connection: ~p, ~p", [Connection,Channel]),
   error_logger:info_msg("closing channel (~p): ~p~n", [?MODULE, channel]),
@@ -104,10 +127,12 @@ terminate(Reason,State) ->
   error_logger:info_msg("closing channel (~p): ~p~n", [?MODULE, State#maui_client.channel]),
   ok.
 
+-spec code_change(any(),map(),any()) -> {ok,map()}.
 code_change(OldVsn,State,Extra) ->
   ?DBG("Code Change: ~p, ~p, ~p", [OldVsn,State,Extra]),
   {ok,State}.
 
+-spec retrieve(pid()) -> null.
 retrieve(Channel) ->
   receive
     {#'basic.deliver'{consumer_tag=_ConsumerTag,delivery_tag=_DeliveryTag,exchange=_Exchange,routing_key=_RoutingKey},#'amqp_msg'{payload=Payload,props=_Props}} ->
@@ -126,11 +151,12 @@ retrieve(Channel) ->
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
+-spec basic_test() -> ok.
 basic_test() ->
   ConsumerTag = <<"test_customer_tag">>,
   Daddy       = self(),
   Durable     = true,
-  Msg         = <<"Kokua Line: Is random call from health survey legit?">>,
+  Msg         = jsx:encode(#{name => <<"Alice">>,age => 30,city => <<"New York">>}),
   Queue       = <<"test_queue">>,
   RK          = <<"test_routing_key">>,
   Type        = <<"direct">>,
@@ -144,6 +170,7 @@ basic_test() ->
   [<<131,97,1>>,<<131,97,2>>,<<131,97,3>>,<<131,97,4>>] = basic_dataset(),
   ok.
 
+-spec declare_exchanges(string(),string(),string()) -> ok.
 declare_exchanges(Exchanges,Queue,RK)
   when is_list(Exchanges) ,
        is_binary(Queue),
@@ -156,6 +183,7 @@ declare_exchanges(Exchanges,Queue,RK)
   amqp_connection:close(Connection),
   ok.
 
+-spec declare_queue(pid(),string(),string(),string()) -> ok.
 declare_queue(Channel,Exchanges,Queue,RK)
   when is_pid(Channel),
        is_list(Exchanges),
@@ -166,6 +194,7 @@ declare_queue(Channel,Exchanges,Queue,RK)
   [#'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
   ok.
 
+-spec declare_publish(string(),binary(),string()) -> ok.
 declare_publish(Exchanges,Msg,RK)
   when is_list(Exchanges) ,
        is_binary(Msg),
@@ -178,6 +207,7 @@ declare_publish(Exchanges,Msg,RK)
   amqp_connection:close(Connection),
   ok.
 
+-spec declare_customer(pid(),string(),string()) -> ok.
 declare_customer(Daddy,Queue,ConsumerTag)
   when is_pid(Daddy),
        is_binary(Queue),
@@ -194,9 +224,11 @@ declare_customer(Daddy,Queue,ConsumerTag)
   amqp_connection:close(Connection),
   ok.
 
+-spec basic_dataset() -> [binary()].
 basic_dataset() ->
   [term_to_binary(Term) || Term <- [1, 2, 3, 4]].
 
+-spec wait_for_connections(non_neg_integer()) -> ok.
 wait_for_connections(Num) ->
   case [] == 0 of
     true  -> timer:sleep(Num),
