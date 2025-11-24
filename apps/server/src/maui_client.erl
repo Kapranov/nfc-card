@@ -165,7 +165,7 @@ retrieve(Channel) ->
       retrieve(Channel);
     _Others ->
       retrieve(Channel)
-    after 500 ->
+    after 400 ->
       io:format("~n"),
       io:format("Time out in seconds has been reached ~n~n")
   end.

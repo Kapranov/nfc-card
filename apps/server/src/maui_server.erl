@@ -163,3 +163,136 @@ terminate(_Reason,_State) -> ok.
 
 -spec code_change(any(),map(),any()) -> {ok,map()}.
 code_change(_OldVsn,State,_Extra) -> {ok,State}.
+
+%%%_* Tests ============================================================
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+-spec basic_test() -> ok.
+basic_test() ->
+  Durable      = true,
+  Msg1         = jsx:encode(#{name => <<"Taumua">>,age => 19,city => <<"Kula">>}),
+  Msg2         = jsx:encode(#{name => <<"Kahele">>,age => 42,city => <<"Hilo">>}),
+  Msg3         = jsx:encode(#{name => <<"Morikawa">>,age => 56,city => <<"Kokua">>}),
+  Queue1       = <<"test_queue1">>,
+  Queue2       = <<"test_queue2">>,
+  Queue3       = <<"test_queue3">>,
+  RK1          = <<"test_routing_key1">>,
+  RK2          = <<"test_routing_key2">>,
+  RK3          = <<"test_routing_key3">>,
+  Type         = <<"direct">>,
+  Exchange1    = <<"test_exchange1">>,
+  Exchange2    = <<"test_exchange2">>,
+  Exchange3    = <<"test_exchange3">>,
+  Exchanges1   = [{Exchange1,Type,Durable}],
+  Exchanges2   = [{Exchange2,Type,Durable}],
+  Exchanges3   = [{Exchange3,Type,Durable}],
+  ok           = declare_exchanges(Exchanges1,Queue1,RK1),
+  ok           = declare_exchanges(Exchanges1,Queue2,RK1),
+  ok           = declare_exchanges(Exchanges1,Queue3,RK1),
+  ok           = declare_exchanges(Exchanges1,Queue1,RK2),
+  ok           = declare_exchanges(Exchanges1,Queue2,RK2),
+  ok           = declare_exchanges(Exchanges1,Queue3,RK2),
+  ok           = declare_exchanges(Exchanges1,Queue1,RK3),
+  ok           = declare_exchanges(Exchanges1,Queue2,RK3),
+  ok           = declare_exchanges(Exchanges1,Queue3,RK3),
+  ok           = declare_exchanges(Exchanges2,Queue1,RK1),
+  ok           = declare_exchanges(Exchanges2,Queue2,RK1),
+  ok           = declare_exchanges(Exchanges2,Queue3,RK1),
+  ok           = declare_exchanges(Exchanges2,Queue1,RK2),
+  ok           = declare_exchanges(Exchanges2,Queue2,RK2),
+  ok           = declare_exchanges(Exchanges2,Queue3,RK2),
+  ok           = declare_exchanges(Exchanges2,Queue1,RK3),
+  ok           = declare_exchanges(Exchanges2,Queue2,RK3),
+  ok           = declare_exchanges(Exchanges2,Queue3,RK3),
+  ok           = declare_exchanges(Exchanges3,Queue1,RK1),
+  ok           = declare_exchanges(Exchanges3,Queue2,RK1),
+  ok           = declare_exchanges(Exchanges3,Queue3,RK1),
+  ok           = declare_exchanges(Exchanges3,Queue1,RK2),
+  ok           = declare_exchanges(Exchanges3,Queue2,RK2),
+  ok           = declare_exchanges(Exchanges3,Queue3,RK2),
+  ok           = declare_exchanges(Exchanges3,Queue1,RK3),
+  ok           = declare_exchanges(Exchanges3,Queue2,RK3),
+  ok           = declare_exchanges(Exchanges3,Queue3,RK3),
+  ok           = declare_publish(Exchanges1,Msg1,RK1),
+  ok           = declare_publish(Exchanges1,Msg2,RK1),
+  ok           = declare_publish(Exchanges1,Msg3,RK1),
+  ok           = declare_publish(Exchanges1,Msg1,RK2),
+  ok           = declare_publish(Exchanges1,Msg2,RK2),
+  ok           = declare_publish(Exchanges1,Msg3,RK2),
+  ok           = declare_publish(Exchanges1,Msg1,RK3),
+  ok           = declare_publish(Exchanges1,Msg2,RK3),
+  ok           = declare_publish(Exchanges1,Msg3,RK3),
+  ok           = declare_publish(Exchanges2,Msg1,RK1),
+  ok           = declare_publish(Exchanges2,Msg2,RK1),
+  ok           = declare_publish(Exchanges2,Msg3,RK1),
+  ok           = declare_publish(Exchanges2,Msg1,RK2),
+  ok           = declare_publish(Exchanges2,Msg2,RK2),
+  ok           = declare_publish(Exchanges2,Msg3,RK2),
+  ok           = declare_publish(Exchanges2,Msg1,RK3),
+  ok           = declare_publish(Exchanges2,Msg2,RK3),
+  ok           = declare_publish(Exchanges2,Msg3,RK3),
+  ok           = declare_publish(Exchanges3,Msg1,RK1),
+  ok           = declare_publish(Exchanges3,Msg2,RK1),
+  ok           = declare_publish(Exchanges3,Msg3,RK1),
+  ok           = declare_publish(Exchanges3,Msg1,RK2),
+  ok           = declare_publish(Exchanges3,Msg2,RK2),
+  ok           = declare_publish(Exchanges3,Msg3,RK2),
+  ok           = declare_publish(Exchanges3,Msg1,RK3),
+  ok           = declare_publish(Exchanges3,Msg2,RK3),
+  ok           = declare_publish(Exchanges3,Msg3,RK3),
+  ok           = wait_for_connections(100),
+  [<<131,97,1>>,<<131,97,2>>,<<131,97,3>>,<<131,97,4>>]=basic_dataset(),
+  ok.
+
+-spec declare_exchanges(string(),string(),string()) -> ok.
+declare_exchanges(Exchanges,Queue,RK)
+  when is_list(Exchanges) ,
+       is_binary(Queue),
+       is_binary(RK) ->
+  {ok,Connection}=amqp_connection:start(amqp_params()),
+  {ok,Channel}=amqp_connection:open_channel(Connection),
+  [#'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{exchange=Name,type=Type,durable=Durable}) || {Name,Type,Durable} <- Exchanges],
+  ok = declare_queue(Channel,Exchanges,Queue,RK),
+  amqp_channel:close(Channel),
+  amqp_connection:close(Connection),
+  ok.
+
+-spec declare_queue(pid(),string(),string(),string()) -> ok.
+declare_queue(Channel,Exchanges,Queue,RK)
+  when is_pid(Channel),
+       is_list(Exchanges),
+       is_binary(Queue),
+       is_binary(RK) ->
+  QueueDeclare=#'queue.declare'{queue=Queue,exclusive=false,auto_delete=false,durable=true},
+  #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
+  [#'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
+  ok.
+
+-spec declare_publish(string(),binary(),string()) -> ok.
+declare_publish(Exchanges,Msg,RK)
+  when is_list(Exchanges) ,
+       is_binary(Msg),
+       is_binary(RK) ->
+  {ok,Connection}=amqp_connection:start(amqp_params()),
+  {ok,Channel}=amqp_connection:open_channel(Connection),
+  [Publish]=[#'basic.publish'{exchange=element(1,E),mandatory=true,routing_key=RK} || E <- Exchanges],
+  amqp_channel:call(Channel,Publish,#amqp_msg{payload=Msg}),
+  amqp_channel:close(Channel),
+  amqp_connection:close(Connection),
+  ok.
+
+-spec basic_dataset() -> [binary()].
+basic_dataset() ->
+  [term_to_binary(Term) || Term <- [1, 2, 3, 4]].
+
+-spec wait_for_connections(non_neg_integer()) -> ok.
+wait_for_connections(Num) ->
+  case [] == 0 of
+    true  -> timer:sleep(Num),
+             wait_for_connections(Num);
+    false -> ok
+  end.
+-else.
+-endif.
+%%%_* Tests ============================================================
