@@ -11,15 +11,15 @@
 
 -export([init/1]).
 
+-define(CONSUMER,<<"test_bisque1">>).
+-define(EXCHANGE,<<"test_lahaina1">>).
+-define(QUEUE,<<"test_aloha1">>).
+-define(ROUTING,<<"test_mahalo1">>).
 -define(SERVER,?MODULE).
--define(CONSUMER,<<"test_bisque">>).
--define(EXCHANGE,<<"test_lahaina">>).
--define(QUEUE,<<"test_aloha">>).
--define(ROUTING,<<"test_mahalo">>).
 -define(TYPE,<<"fanout">>).
 
 start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?SERVER, []).
+    supervisor:start_link({local,?SERVER},?SERVER,[]).
 
 init([]) ->
     SupFlags = #{
@@ -34,4 +34,4 @@ init([]) ->
                    },permanent,10000,worker,[maui_server]
                   }
                  ],
-    {ok, {SupFlags, ChildSpecs}}.
+    {ok, {SupFlags,ChildSpecs}}.
