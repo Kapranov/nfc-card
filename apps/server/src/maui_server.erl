@@ -65,7 +65,9 @@ amqp_params() ->
         Queue::string(),
         Type::boolean(),
         RK::string(),
-        ConsumerTag::string()) -> {ok,pid()} | atom() | {error,{already_started,pid()}}.
+        ConsumerTag::string()) -> {ok,pid()} |
+                                  atom() |
+                                  {error,{already_started,pid()}}.
 start_link(Exchange,Queue,Type,RK,ConsumerTag) when is_binary(Exchange);
                                                     is_binary(Queue);
                                                     is_boolean(Type);
@@ -73,14 +75,24 @@ start_link(Exchange,Queue,Type,RK,ConsumerTag) when is_binary(Exchange);
                                                     is_binary(ConsumerTag) ->
   gen_server:start_link({local,?SERVER},?SERVER,[Exchange,Queue,Type,RK,ConsumerTag],[]).
 
--spec stop() -> {reply,atom(),map()} | {reply,atom(),map(),non_neg_integer()} | no_return() | {noreply,map(),non_neg_integer()} | {stop,atom(),atom(),map()} | {stop,atom(),map()}.
+-spec stop() -> {reply,atom(),map()} |
+                {reply,atom(),map(),non_neg_integer()} |
+                no_return() |
+                {noreply,map(),non_neg_integer()} |
+                {stop,atom(),atom(),map()} |
+                {stop,atom(),map()}.
 stop() -> gen_server:call(?SERVER,stop,infinity).
 
--spec publish(string()) -> no_return() | {noreply,map(),non_neg_integer()} | {stop,atom(),map()}.
+-spec publish(string()) -> no_return() |
+                           {noreply,map(),non_neg_integer()} |
+                           {stop,atom(),map()}.
 publish(Msg) when is_map(Msg) ->
   gen_server:cast(?SERVER,{publish,jsx:encode(Msg)}).
 
--spec init(list()) -> {ok,map()} | {ok,map(),non_neg_integer} | ignore | {stop,atom()}.
+-spec init(list()) -> {ok,map()} |
+                      {ok,map(),non_neg_integer} |
+                      ignore |
+                      {stop,atom()}.
 init([Exchange,Queue,Type,RK,ConsumerTag]) ->
   process_flag(trap_exit,true),
   {ok,Connection}=amqp_connection:start(amqp_params()),
@@ -101,11 +113,18 @@ init([Exchange,Queue,Type,RK,ConsumerTag]) ->
          routing_key=binary(RK)
        },timeout_millseconds()}.
 
--spec handle_call(atom(),atom(),map()) -> {reply,atom(),map()} | {reply,atom(),map(),non_neg_integer()} | no_return() | {noreply,map(),non_neg_integer()} | {stop,atom(),atom(),map()} | {stop,atom(),map()}.
+-spec handle_call(atom(),atom(),map()) -> {reply,atom(),map()} |
+                                          {reply,atom(),map(),non_neg_integer()} |
+                                          no_return() |
+                                          {noreply,map(),non_neg_integer()} |
+                                          {stop,atom(),atom(),map()} |
+                                          {stop,atom(),map()}.
 handle_call(stop,_From,State) -> {stop,normal,ok,State};
 handle_call(_Request,_From,State) -> {reply,ok,State}.
 
--spec handle_cast(tuple(),map()) -> no_return() | {noreply,map(),non_neg_integer()} | {stop,atom(),map()}.
+-spec handle_cast(tuple(),map()) -> no_return() |
+                                    {noreply,map(),non_neg_integer()} |
+                                    {stop,atom(),map()}.
 handle_cast({publish,Msg},#maui_server{channel=Channel,exchange=Exchange,routing_key=RK}=State) ->
   Headers=[{<<"company">>,binary,<<"StarTech">>}],
   BasicPublish=#'basic.publish'{exchange=Exchange,mandatory=true,routing_key=RK},
@@ -117,17 +136,19 @@ handle_cast({publish,Msg},#maui_server{channel=Channel,exchange=Exchange,routing
                   },
   ok=amqp_channel:cast(Channel,BasicPublish,#'amqp_msg'{props=Props,payload=binary(Msg)}),
   Message = "Published\nPayload: ~p~n",
-  io:format(Message, [jsx:decode(Msg)]),
+  io:format(Message,[jsx:decode(Msg)]),
   {noreply,State};
 handle_cast(_Msg,State) -> {noreply,State}.
 
--spec handle_info(atom(),map()) -> no_return() | {noreply,map(),non_neg_integer()} | {stop,atom(),map()}.
+-spec handle_info(atom(),map()) -> no_return() |
+                                   {noreply,map(),non_neg_integer()} |
+                                   {stop,atom(),map()}.
 handle_info(timeout,#maui_server{channel=Channel,exchange=Exchange,routing_key=RK}=State) ->
   Term=#{age=>generate_age(),city=>generate_city(),name=>generate_name()},
   Props=#'P_basic'{delivery_mode=?PERSISTENT_DELIVERY,content_type=?CONTENT_TYPE},
   Msg=#'amqp_msg'{props=Props,payload=jsx:encode(Term)},
   amqp_channel:cast(Channel,#'basic.publish'{exchange=Exchange,mandatory=true,routing_key=RK},Msg),
-  io:format("~s~n", [jsx:encode(Term)]),
+  io:format("~s~n",[jsx:encode(Term)]),
   {noreply,State,timeout_millseconds()};
 handle_info(Info,State) ->
   io:format("unexpected info: ~p~n",[Info]),
