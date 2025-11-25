@@ -52,12 +52,12 @@ timeout_millseconds() -> 5_500.
                          }.
 amqp_params() ->
   #amqp_params_network{
-     connection_timeout=?TIMEOUT,
-     host=?HOST,
-     password=?PASSWORD,
-     port=?PORT,
-     ssl_options=?SSL,
-     username=?USERNAME
+     connection_timeout=?RABBIT_CONNECTION_TIMEOUT,
+     host=?RABBIT_HOST,
+     password=?RABBIT_PASSWORD,
+     port=?RABBIT_PORT,
+     ssl_options=?RABBIT_SSL_OPTIONS,
+     username=?RABBIT_USERNAME
   }.
 
 -spec start_link(
@@ -70,7 +70,7 @@ amqp_params() ->
                                   {error,{already_started,pid()}}.
 start_link(Exchange,Queue,Type,RK,ConsumerTag) when is_binary(Exchange);
                                                     is_binary(Queue);
-                                                    is_boolean(Type);
+                                                    is_binary(Type);
                                                     is_binary(RK);
                                                     is_binary(ConsumerTag) ->
   gen_server:start_link({local,?SERVER},?SERVER,[Exchange,Queue,Type,RK,ConsumerTag],[]).
@@ -97,8 +97,8 @@ init([Exchange,Queue,Type,RK,ConsumerTag]) ->
   process_flag(trap_exit,true),
   {ok,Connection}=amqp_connection:start(amqp_params()),
   {ok,Channel}=amqp_connection:open_channel(Connection),
-  #'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{exchange=binary(Exchange),type=binary(Type),durable=true}),
-  QueueDeclare=#'queue.declare'{queue=binary(Queue),exclusive=false,auto_delete=false,durable=true},
+  #'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{arguments=[{"main-exchange",longstr,Exchange}],exchange=binary(Exchange),type=binary(Type),durable=true}),
+  QueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"},{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}],queue=binary(Queue),exclusive=false,auto_delete=false,durable=true},
   #'queue.declare_ok'{queue=Queue,message_count=MessageCount,consumer_count=ConsumerCount}=amqp_channel:call(Channel,QueueDeclare),
   #'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=binary(Exchange),routing_key=binary(RK)}),
   io:format(" [*] Waiting for messages. To exit press CTRL+C~n"),
@@ -128,8 +128,8 @@ handle_call(_Request,_From,State) -> {reply,ok,State}.
 handle_cast({publish,Msg},#maui_server{channel=Channel,exchange=Exchange,routing_key=RK}=State) ->
   Headers=[{<<"company">>,binary,<<"StarTech">>}],
   BasicPublish=#'basic.publish'{exchange=Exchange,mandatory=true,routing_key=RK},
-  Props=#'P_basic'{delivery_mode=?PERSISTENT_DELIVERY,
-                   content_type=?CONTENT_TYPE,
+  Props=#'P_basic'{delivery_mode=?RABBIT_PERSISTENT_DELIVERY,
+                   content_type=?RABBIT_CONTENT_TYPE,
                    message_id=generate_msg_id(),
                    timestamp=time_since_epoch(),
                    headers=Headers
@@ -144,8 +144,11 @@ handle_cast(_Msg,State) -> {noreply,State}.
                                    {noreply,map(),non_neg_integer()} |
                                    {stop,atom(),map()}.
 handle_info(timeout,#maui_server{channel=Channel,exchange=Exchange,routing_key=RK}=State) ->
+  amqp_channel:register_return_handler(Channel,self()),
+  amqp_channel:register_confirm_handler(Channel,self()),
+  %amqp_channel:call(Channel,#'confirm.select'{nowait=true}),
   Term=#{age=>generate_age(),city=>generate_city(),name=>generate_name()},
-  Props=#'P_basic'{delivery_mode=?PERSISTENT_DELIVERY,content_type=?CONTENT_TYPE},
+  Props=#'P_basic'{delivery_mode=?RABBIT_PERSISTENT_DELIVERY,content_type=?RABBIT_CONTENT_TYPE},
   Msg=#'amqp_msg'{props=Props,payload=jsx:encode(Term)},
   amqp_channel:cast(Channel,#'basic.publish'{exchange=Exchange,mandatory=true,routing_key=RK},Msg),
   io:format("~s~n",[jsx:encode(Term)]),
@@ -171,19 +174,19 @@ code_change(_OldVsn,State,_Extra) -> {ok,State}.
 -spec basic_test() -> ok.
 basic_test() ->
   Durable      = true,
-  Msg1         = jsx:encode(#{name => <<"Taumua">>,age => 19,city => <<"Kula">>}),
-  Msg2         = jsx:encode(#{name => <<"Kahele">>,age => 42,city => <<"Hilo">>}),
-  Msg3         = jsx:encode(#{name => <<"Morikawa">>,age => 56,city => <<"Kokua">>}),
-  Queue1       = <<"test_queue1">>,
-  Queue2       = <<"test_queue2">>,
-  Queue3       = <<"test_queue3">>,
-  RK1          = <<"test_routing_key1">>,
-  RK2          = <<"test_routing_key2">>,
-  RK3          = <<"test_routing_key3">>,
-  Type         = <<"direct">>,
-  Exchange1    = <<"test_exchange1">>,
-  Exchange2    = <<"test_exchange2">>,
-  Exchange3    = <<"test_exchange3">>,
+  Msg1         = jsx:encode(?RABBIT_TEST_PAYLOAD1),
+  Msg2         = jsx:encode(?RABBIT_TEST_PAYLOAD2),
+  Msg3         = jsx:encode(?RABBIT_TEST_PAYLOAD3),
+  Queue1       = ?RABBIT_TEST_QUEUE1,
+  Queue2       = ?RABBIT_TEST_QUEUE2,
+  Queue3       = ?RABBIT_TEST_QUEUE3,
+  RK1          = ?RABBIT_TEST_ROUTING_KEY1,
+  RK2          = ?RABBIT_TEST_ROUTING_KEY2,
+  RK3          = ?RABBIT_TEST_ROUTING_KEY3,
+  Type         = ?RABBIT_TEST_TYPE,
+  Exchange1    = ?RABBIT_TEST_EXCHANGE1,
+  Exchange2    = ?RABBIT_TEST_EXCHANGE2,
+  Exchange3    = ?RABBIT_TEST_EXCHANGE3,
   Exchanges1   = [{Exchange1,Type,Durable}],
   Exchanges2   = [{Exchange2,Type,Durable}],
   Exchanges3   = [{Exchange3,Type,Durable}],
@@ -252,7 +255,10 @@ declare_exchanges(Exchanges,Queue,RK)
        is_binary(RK) ->
   {ok,Connection}=amqp_connection:start(amqp_params()),
   {ok,Channel}=amqp_connection:open_channel(Connection),
-  [#'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{exchange=Name,type=Type,durable=Durable}) || {Name,Type,Durable} <- Exchanges],
+  amqp_channel:register_return_handler(Channel,self()),
+  amqp_channel:register_confirm_handler(Channel,self()),
+  amqp_channel:call(Channel,#'confirm.select'{nowait=true}),
+  [#'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{arguments=[{"main-exchange",longstr,Name}],exchange=Name,type=Type,durable=Durable}) || {Name,Type,Durable} <- Exchanges],
   ok = declare_queue(Channel,Exchanges,Queue,RK),
   amqp_channel:close(Channel),
   amqp_connection:close(Connection),
@@ -264,7 +270,7 @@ declare_queue(Channel,Exchanges,Queue,RK)
        is_list(Exchanges),
        is_binary(Queue),
        is_binary(RK) ->
-  QueueDeclare=#'queue.declare'{queue=Queue,exclusive=false,auto_delete=false,durable=true},
+  QueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"},{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}],queue=Queue,exclusive=false,auto_delete=false,durable=true},
   #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
   [#'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
   ok.

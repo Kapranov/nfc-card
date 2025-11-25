@@ -45,7 +45,7 @@ NFC картка не є пропуском, а використовується
 
 `/card/delete`
 Обов’язкові поля: "card_uid"
-Видалення картки 
+Видалення картки
 **Example response**: `{card_uid: string, user_id: number}`
 
 `/card/list_by_user`

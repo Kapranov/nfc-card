@@ -11,27 +11,27 @@
 
 -export([init/1]).
 
--define(CONSUMER,<<"test_bisque1">>).
--define(EXCHANGE,<<"test_lahaina1">>).
--define(QUEUE,<<"test_aloha1">>).
--define(ROUTING,<<"test_mahalo1">>).
 -define(SERVER,?MODULE).
--define(TYPE,<<"fanout">>).
 
 start_link() ->
-    supervisor:start_link({local,?SERVER},?SERVER,[]).
+  supervisor:start_link({local,?SERVER},?SERVER,[]).
 
 init([]) ->
-    SupFlags = #{
-        strategy => one_for_all,
-        intensity => 0,
-        period => 1
-    },
-    ChildSpecs = [
-                  {maui_server,
-                   {maui_server,start_link,
-                    [?EXCHANGE,?QUEUE,?TYPE,?ROUTING,?CONSUMER]
-                   },permanent,10000,worker,[maui_server]
-                  }
-                 ],
-    {ok, {SupFlags,ChildSpecs}}.
+  {ok,RabbitType}=application:get_env(server,rabbit_type),
+  {ok,RabbitConsumer}=application:get_env(server,rabbit_consumer1),
+  {ok,RabbitExchange}=application:get_env(server,rabbit_exchange1),
+  {ok,RabbitQueue}=application:get_env(server,rabbit_queue1),
+  {ok,RabbitRoutingKey}=application:get_env(server,rabbit_routing_key1),
+  SupFlags = #{
+      strategy => one_for_all,
+      intensity => 0,
+      period => 1
+  },
+  ChildSpecs = [
+                {maui_server,
+                 {maui_server,start_link,
+                  [RabbitExchange,RabbitQueue,RabbitType,RabbitRoutingKey,RabbitConsumer]
+                 },permanent,10000,worker,[maui_server]
+                }
+               ],
+  {ok, {SupFlags,ChildSpecs}}.

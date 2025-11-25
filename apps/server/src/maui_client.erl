@@ -50,12 +50,12 @@ ref_to_string() ->
                          }.
 amqp_params() ->
   #amqp_params_network{
-     connection_timeout=?TIMEOUT,
-     host=?HOST,
-     password=?PASSWORD,
-     port=?PORT,
-     ssl_options=?SSL,
-     username=?USERNAME
+     connection_timeout=?RABBIT_CONNECTION_TIMEOUT,
+     host=?RABBIT_HOST,
+     password=?RABBIT_PASSWORD,
+     port=?RABBIT_PORT,
+     ssl_options=?RABBIT_SSL_OPTIONS,
+     username=?RABBIT_USERNAME
   }.
 
 -spec start_link(
@@ -176,24 +176,24 @@ retrieve(Channel) ->
 
 -spec basic_test() -> ok.
 basic_test() ->
-  ConsumerTag1 = <<"test_customer_tag1">>,
-  ConsumerTag2 = <<"test_customer_tag2">>,
-  ConsumerTag3 = <<"test_customer_tag3">>,
+  ConsumerTag1 = ?RABBIT_TEST_CUSTOMER1,
+  ConsumerTag2 = ?RABBIT_TEST_CUSTOMER2,
+  ConsumerTag3 = ?RABBIT_TEST_CUSTOMER3,
   Daddy        = self(),
   Durable      = true,
-  Msg1         = jsx:encode(#{name => <<"Taumua">>,age => 19,city => <<"Kula">>}),
-  Msg2         = jsx:encode(#{name => <<"Kahele">>,age => 42,city => <<"Hilo">>}),
-  Msg3         = jsx:encode(#{name => <<"Morikawa">>,age => 56,city => <<"Kokua">>}),
-  Queue1       = <<"test_queue1">>,
-  Queue2       = <<"test_queue2">>,
-  Queue3       = <<"test_queue3">>,
-  RK1          = <<"test_routing_key1">>,
-  RK2          = <<"test_routing_key2">>,
-  RK3          = <<"test_routing_key3">>,
-  Type         = <<"direct">>,
-  Exchange1    = <<"test_exchange1">>,
-  Exchange2    = <<"test_exchange2">>,
-  Exchange3    = <<"test_exchange3">>,
+  Msg1         = jsx:encode(?RABBIT_TEST_PAYLOAD1),
+  Msg2         = jsx:encode(?RABBIT_TEST_PAYLOAD2),
+  Msg3         = jsx:encode(?RABBIT_TEST_PAYLOAD3),
+  Queue1       = ?RABBIT_TEST_QUEUE1,
+  Queue2       = ?RABBIT_TEST_QUEUE2,
+  Queue3       = ?RABBIT_TEST_QUEUE3,
+  RK1          = ?RABBIT_TEST_ROUTING_KEY1,
+  RK2          = ?RABBIT_TEST_ROUTING_KEY2,
+  RK3          = ?RABBIT_TEST_ROUTING_KEY3,
+  Type         = ?RABBIT_TEST_TYPE,
+  Exchange1    = ?RABBIT_TEST_EXCHANGE1,
+  Exchange2    = ?RABBIT_TEST_EXCHANGE2,
+  Exchange3    = ?RABBIT_TEST_EXCHANGE3,
   Exchanges1   = [{Exchange1,Type,Durable}],
   Exchanges2   = [{Exchange2,Type,Durable}],
   Exchanges3   = [{Exchange3,Type,Durable}],
@@ -272,7 +272,10 @@ declare_exchanges(Exchanges,Queue,RK)
        is_binary(RK) ->
   {ok,Connection}=amqp_connection:start(amqp_params()),
   {ok,Channel}=amqp_connection:open_channel(Connection),
-  [#'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{exchange=Name,type=Type,durable=Durable}) || {Name,Type,Durable} <- Exchanges],
+  amqp_channel:register_return_handler(Channel,self()),
+  amqp_channel:register_confirm_handler(Channel,self()),
+  amqp_channel:call(Channel,#'confirm.select'{nowait=true}),
+  [#'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{arguments=[{"main-exchange",longstr,Name}],exchange=Name,type=Type,durable=Durable}) || {Name,Type,Durable} <- Exchanges],
   ok = declare_queue(Channel,Exchanges,Queue,RK),
   amqp_channel:close(Channel),
   amqp_connection:close(Connection),
@@ -284,7 +287,7 @@ declare_queue(Channel,Exchanges,Queue,RK)
        is_list(Exchanges),
        is_binary(Queue),
        is_binary(RK) ->
-  QueueDeclare=#'queue.declare'{queue=Queue,exclusive=false,auto_delete=false,durable=true},
+  QueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"},{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}],queue=Queue,exclusive=false,auto_delete=false,durable=true},
   #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
   [#'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
   ok.
