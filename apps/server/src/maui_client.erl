@@ -251,7 +251,7 @@ basic_test() ->
   ok           = declare_publish(Exchanges3,Msg1,RK3),
   ok           = declare_publish(Exchanges3,Msg2,RK3),
   ok           = declare_publish(Exchanges3,Msg3,RK3),
-  ok           = wait_for_connections(100),
+  ok           = wait_for_connections(?DEFAULT_TIMEOUT),
   ok           = declare_customer(Daddy,Queue1,ConsumerTag1),
   ok           = declare_customer(Daddy,Queue1,ConsumerTag2),
   ok           = declare_customer(Daddy,Queue1,ConsumerTag3),
@@ -261,7 +261,7 @@ basic_test() ->
   ok           = declare_customer(Daddy,Queue3,ConsumerTag1),
   ok           = declare_customer(Daddy,Queue3,ConsumerTag2),
   ok           = declare_customer(Daddy,Queue3,ConsumerTag3),
-  ok           = wait_for_connections(1_000),
+  ok           = wait_for_connections(?DEFAULT_TIMEOUT),
   [<<131,97,1>>,<<131,97,2>>,<<131,97,3>>,<<131,97,4>>]=basic_dataset(),
   ok.
 

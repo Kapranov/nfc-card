@@ -1,5 +1,6 @@
 -ifndef(_BASE_AMQP_HRL_).
 -define(DBG(F, A), io:format("DBG: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
+-define(DEFAULT_TIMEOUT,100).
 -define(ERR(F, A), io:format("***ERR***: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
 -define(INFO(F, A), io:format("===INFO===: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
 -define(RABBIT_CONNECTION_TIMEOUT,7_000).
