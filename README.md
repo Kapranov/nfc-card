@@ -126,6 +126,58 @@ erl> maui:publish(<<"Kokua Line: Where can federal workers get relief?">>).
 erl> maui:publish(<<"Honolulu police shut down 3 Kalihi gamerooms, seize $24K in cash">>).
 ```
 
+```
+bash> make run
+
+erl> Msg=#{age=>99,city=>"Honolulu",name=>"Kaplanov"}.
+erl> maui_server:publish(Msg).
+erl> maui_client:start_link(<<"test_aloha1">>,<<"test_bisque1">>).
+erl> maui_client:fetch().
+```
+
+```
+erl> {ok,Brokers}=application:get_env(server,brokers).
+erl> Rabbit=proplists:get_value(rabbit,Brokers).
+erl> F = fun(K) -> proplists:get_value(K,Rabbit) end.
+erl> F(connection_timeout).
+erl> F(consumer1).
+erl> F(consumer2).
+erl> F(consumer3).
+erl> F(content_type).
+erl> F(exchange1).
+erl> F(exchange2).
+erl> F(exchange3).
+erl> F(host).
+erl> F(node).
+erl> F(password).
+erl> F(payload).
+erl> F(persistent_delivery).
+erl> F(port).
+erl> F(queue1).
+erl> F(queue2).
+erl> F(queue3).
+erl> F(routing_key1).
+erl> F(routing_key2).
+erl> F(routing_key3).
+erl> F(ssl).
+erl> F(test_exchange1).
+erl> F(test_exchange2).
+erl> F(test_exchange3).
+erl> F(test_payload1).
+erl> F(test_payload3).
+erl> F(test_queue1).
+erl> F(test_queue2).
+erl> F(test_queue3).
+erl> F(test_routing_key1).
+erl> F(test_routing_key2).
+erl> F(test_routing_key3).
+erl> F(test_type).
+erl> F(type).
+erl> F(unknown_key).
+erl> F(username).
+erl> F({test_payload2).
+```
+
 ### 30 Sep 2025 by Oleg G.Kapranov
 
 [1]: http://127.0.0.1:15672

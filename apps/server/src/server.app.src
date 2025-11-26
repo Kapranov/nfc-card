@@ -4,14 +4,14 @@
   , {registered,[]}
   , {mod,{server_app,[]}}
   , {applications,[kernel,stdlib,core]}
-  , {env,[{brokers,[{network
+  , {env,[{brokers,[{sedna
                     ,[{username,<<"guest">>}
                     , {password,<<"guest">>}
                     , {virtual_host,<<"/">>}
                     , {host,"localhost"}
                     , {port,5672}]}
                     ,
-                    {network
+                    {axion
                     ,[{username,<<"foo">>}
                     , {password,<<"foo">>}
                     , {virtual_host,<<"/">>}
@@ -19,11 +19,48 @@
                     , {port,5672}]}
                     ,
                     {direct
-                     ,[{username,<<"foo">>}
-                     , {virtual_host,<<"/">>}
-                     , {node,'rabbit@localhost'}
-                      ]
-                    }
+                    ,[{username,<<"foo">>}
+                    , {virtual_host,<<"/">>}
+                    , {node,'rabbit@localhost'}]}
+                    ,
+                    {rabbit
+                    ,[{connection_timeout,7_000}
+                    , {consumer1,<<"test_bisque1">>}
+                    , {consumer2,<<"test_bisque2">>}
+                    , {consumer3,<<"test_bisque3">>}
+                    , {content_type,<<"application/json">>}
+                    , {exchange1,<<"test_lahaina1">>}
+                    , {exchange2,<<"test_lahaina2">>}
+                    , {exchange3,<<"test_lahaina3">>}
+                    , {host,"127.0.0.1"}
+                    , {node,'rabbit@localhost'}
+                    , {password,<<"guest">>}
+                    , {payload,#{name => <<"Nakamura">>,age => 22,city => <<"Oahu">>}}
+                    , {persistent_delivery,2}
+                    , {port,5672}
+                    , {queue1,<<"test_aloha1">>}
+                    , {queue2,<<"test_aloha2">>}
+                    , {queue3,<<"test_aloha3">>}
+                    , {routing_key1,<<"test_mahalo1">>}
+                    , {routing_key2,<<"test_mahalo2">>}
+                    , {routing_key3,<<"test_mahalo3">>}
+                    , {ssl,none}
+                    , {test_exchange1,<<"test_exchange1">>}
+                    , {test_exchange2,<<"test_exchange2">>}
+                    , {test_exchange3,<<"test_exchange3">>}
+                    , {test_payload1,#{name => <<"Taumua">>,age => 19,city => <<"Kula">>}}
+                    , {test_payload2,#{name => <<"Kahele">>,age => 42,city => <<"Hilo">>}}
+                    , {test_payload3,#{name => <<"Morikawa">>,age => 56,city => <<"Kokua">>}}
+                    , {test_queue1,<<"test_queue1">>}
+                    , {test_queue2,<<"test_queue2">>}
+                    , {test_queue3,<<"test_queue3">>}
+                    , {test_routing_key1,<<"test_routing_key1">>}
+                    , {test_routing_key2,<<"test_routing_key2">>}
+                    , {test_routing_key3,<<"test_routing_key3">>}
+                    , {test_type,<<"direct">>}
+                    , {type,<<"fanout">>}
+                    , {unknown_key,<<"unknown_key">>}
+                    , {username,<<"guest">>}]}
                    ]
           }
          ]
