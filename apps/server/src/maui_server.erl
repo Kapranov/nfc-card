@@ -156,10 +156,6 @@ handle_info(timeout,#maui_server{channel=Channel,exchange=Exchange,routing_key=R
   amqp_channel:cast(Channel,#'basic.publish'{exchange=Exchange,mandatory=true,routing_key=RK},Msg),
   io:format("~s~n",[jsx:encode(Term)]),
   {noreply,State,timeout_millseconds()};
-handle_info(shutdown,State) ->
-  {stop,normal,State};
-handle_info({'DOWN', _MRef, process, _Pid, _Info}, State) ->
-  {noreply, State};
 handle_info(Info,State) ->
   io:format("unexpected info: ~p~n",[Info]),
   {noreply,State}.
