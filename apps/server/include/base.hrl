@@ -40,6 +40,7 @@
 -define(RABBIT_TEST_ROUTING_KEY3,<<"test_routing_key3">>).
 -define(RABBIT_TEST_TYPE,<<"direct">>).
 -define(RABBIT_UNKNOWN_KEY,<<"unknown_key">>).
+-define(RABBIT_UNROUTABLE,<<"unroutable">>).
 -define(RABBIT_USERNAME,<<"guest">>).
 -define(SERVER,?MODULE).
 -define(_BASE_AMQP_HRL_,true).
@@ -47,30 +48,19 @@
 -record(maui_client,{channel :: pid()
                     ,connection :: pid()
                     ,consumer_tag :: string()
-                    ,continuations=dict:new()
-                    ,correlation_id=make_ref()
-                    ,message_id=0
                     ,queue :: string()
                     }).
 -record(maui_server,{channel :: pid()
                     ,connection :: pid()
-                    ,consumer_count :: integer()
                     ,consumer_tag :: string()
+                    ,content_type :: binary()
+                    ,delivery_tag :: non_neg_integer()
                     ,exchange :: string()
+                    ,headers :: list()
+                    ,message_id :: string()
                     ,queue :: string()
-                    ,message_count :: integer()
                     ,routing_key :: string()
+                    ,timestamp :: non_neg_integer()
                     }).
--record(base_amqp_deliver,{pid :: pid()
-                          ,consumer_tag :: string()
-                          ,delivery_tag :: non_neg_integer()
-                          ,exchange :: string()
-                          ,routing_key :: string()
-                          ,payload :: map()
-                          ,reply_to :: string()
-                          ,correlation_id :: string()
-                          ,message_id :: string()
-                          }).
-
 -record(base_amqp_ack, {delivery_tag}).
 -endif.

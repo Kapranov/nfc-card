@@ -14,6 +14,7 @@
 -define(SERVER,?MODULE).
 -define(CHILD(Id,Mod,Type,Args),{Id,{Mod,start_link,Args},transient,5000,Type,[Mod]}).
 
+-spec start_link() -> {ok, pid()}.
 start_link() ->
   supervisor:start_link({local,?SERVER},?SERVER,[]).
 

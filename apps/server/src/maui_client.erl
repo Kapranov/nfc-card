@@ -12,6 +12,7 @@
         ,init/1
         ,off/0
         ,ref_to_string/0
+        ,start/0
         ,start_link/2
         ,stop/0
         ,terminate/2
@@ -64,10 +65,12 @@ amqp_params() ->
                                   ignore |
                                   {error,{already_started,pid()}}.
 start_link(Queue,ConsumerTag)
-    when is_binary(Queue);is_binary(ConsumerTag) ->
+    when is_binary(Queue),
+         is_binary(ConsumerTag) ->
       ?INFO("Starting: ~p ~p",[Queue,ConsumerTag]),
-      {ok, Pid}=gen_server:start_link({local,?SERVER},?SERVER,[Queue,ConsumerTag],[]),
-      io:format("Server started with Pid: ~p~n",[Pid]).
+      {ok,Pid}=gen_server:start_link({local,?SERVER},?SERVER,[Queue,ConsumerTag],[]),
+      io:format("Server started with Pid: ~p~n",[Pid]),
+      {ok,Pid}.
 
 -spec stop() -> {reply,atom(),map()} |
                 {reply,atom(),map(),non_neg_integer()} |
@@ -89,6 +92,13 @@ off() ->
                  {stop,atom(),map()}.
 fetch() -> gen_server:call(?SERVER,fetch).
 
+-spec start()-> {ok,pid()} | atom() | {error,{already_started,pid()}}.
+start() ->
+  {ok,RabbitConsumer}=application:get_env(server,rabbit_consumer1),
+  {ok,RabbitQueue}=application:get_env(server,rabbit_queue1),
+  {ok,Pid}=maui_client:start_link(RabbitQueue,RabbitConsumer),
+  {ok,Pid}.
+
 -spec init(list()) -> {ok,map()} |
                       {ok,map(),non_neg_integer} |
                       ignore |
@@ -97,7 +107,7 @@ init([Queue,ConsumerTag]) ->
   ?DBG("~nQueue:       ~p" "~nConsumerTag: ~p" "~n",[Queue,ConsumerTag]),
   {ok,Connection}=amqp_connection:start(amqp_params()),
   {ok,Channel}=amqp_connection:open_channel(Connection),
-  {ok,#maui_client{channel=Channel,connection=Connection,consumer_tag=ConsumerTag,message_id=0+1,queue=Queue}}.
+  {ok,#maui_client{channel=Channel,connection=Connection,consumer_tag=ConsumerTag,queue=Queue}}.
 
 -spec handle_call(atom(),atom(),map()) -> {reply,atom(),map()} |
                                           {reply,atom(),map(),non_neg_integer()} |
@@ -136,6 +146,7 @@ handle_info(timeout,State) ->
   {noreply,State,timeout_millseconds()};
 handle_info(Info,State) ->
   ?DBG("Handle Info noreply: ~p, ~p",[Info,State]),
+  error_logger:info_msg("weird info message, investigate (~p): ~p~n",[?MODULE,Info]),
   {noreply,State}.
 
 -spec terminate(any(),map()) -> ok.
@@ -147,7 +158,6 @@ terminate(_Reason,#maui_client{connection=Connection,channel=Channel}) ->
   ok;
 terminate(Reason,State) ->
   ?DBG("Terminate: ~p, ~p",[Reason,State]),
-  error_logger:info_msg("closing channel (~p): ~p~n",[?MODULE,State#maui_client.channel]),
   ok.
 
 -spec code_change(any(),map(),any()) -> {ok,map()}.
@@ -158,7 +168,16 @@ code_change(OldVsn,State,Extra) ->
 -spec retrieve(pid()) -> nil.
 retrieve(Channel) ->
   receive
-    {#'basic.deliver'{consumer_tag=_ConsumerTag,delivery_tag=_DeliveryTag,exchange=_Exchange,routing_key=_RoutingKey},#'amqp_msg'{payload=Payload,props=_Props}} ->
+    {#'basic.deliver'{consumer_tag=_ConsumerTag,delivery_tag=_DeliveryTag,exchange=_Exchange,routing_key=_RoutingKey},#'amqp_msg'{payload=Payload,props=Props}} ->
+      #'P_basic'{content_type=ContentType
+                ,headers=Header
+                ,delivery_mode=DeliveryMode
+                ,message_id=MessageId
+                ,timestamp=TimeStamp
+                }=Props,
+      NewProps={'P_basic',ContentType,Header,DeliveryMode,MessageId,TimeStamp},
+      %io:format("~w ~n", [NewProps]),
+      error_logger:info_msg("basic deliver (~p): ~w~n",[?MODULE,NewProps]),
       io:format(" [x] JsonBinary received message: ~p~n",[Payload]),
       Message = "Basic return\nPayload: ~p~n",
       io:format(Message,[jsx:decode(Payload)]),

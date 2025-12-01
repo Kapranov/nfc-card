@@ -3,17 +3,18 @@
 
 -behaviour(gen_server).
 
--export([code_change/3
+-export([cleanup/0
+        ,code_change/3
         ,generate_msg_id/0
         ,handle_call/3
         ,handle_cast/2
         ,handle_info/2
         ,init/1
         ,publish/1
+        ,start/0
         ,start_link/5
         ,stop/0
         ,terminate/2
-        ,cleanup/0
         ]).
 
 -include("./_build/default/lib/amqp_client/include/amqp_client.hrl").
@@ -43,6 +44,11 @@ time_since_epoch() ->
 -spec timeout_millseconds() -> non_neg_integer().
 timeout_millseconds() -> 5_500.
 
+-spec ack_message(pid(),non_neg_integer()) -> ok.
+ack_message(Channel,DeliveryTag) ->
+  Method=#'basic.ack'{delivery_tag=DeliveryTag},
+  amqp_channel:call(Channel,Method).
+
 -spec amqp_params() -> #amqp_params_network{
                           connection_timeout :: non_neg_integer(),
                           host :: string(),
@@ -64,7 +70,7 @@ amqp_params() ->
 -spec start_link(
         Exchange::string(),
         Queue::string(),
-        Type::boolean(),
+        Type::string(),
         RK::string(),
         ConsumerTag::string()) -> {ok,pid()} |
                                   atom() |
@@ -84,6 +90,17 @@ start_link(Exchange,Queue,Type,RK,ConsumerTag) when is_binary(Exchange);
                 {stop,atom(),map()}.
 stop() -> gen_server:call(?SERVER,stop,infinity).
 
+
+-spec start()-> {ok,pid()} | atom() | {error,{already_started,pid()}}.
+start() ->
+  {ok,RabbitType}=application:get_env(server,rabbit_type),
+  {ok,RabbitConsumer}=application:get_env(server,rabbit_consumer1),
+  {ok,RabbitExchange}=application:get_env(server,rabbit_exchange1),
+  {ok,RabbitQueue}=application:get_env(server,rabbit_queue1),
+  {ok,RabbitRoutingKey}=application:get_env(server,rabbit_routing_key1),
+  {ok,Pid}=maui_server:start_link(RabbitExchange,RabbitQueue,RabbitType,RabbitRoutingKey,RabbitConsumer),
+  {ok,Pid}.
+
 cleanup() -> exit(?MODULE, kill).
 
 -spec publish(string()) -> no_return() |
@@ -102,16 +119,14 @@ init([Exchange,Queue,Type,RK,ConsumerTag]) ->
   {ok,Channel}=amqp_connection:open_channel(Connection),
   #'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{arguments=[{"main-exchange",longstr,Exchange}],exchange=binary(Exchange),type=binary(Type),durable=true}),
   QueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"},{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}],queue=binary(Queue),exclusive=false,auto_delete=false,durable=true},
-  #'queue.declare_ok'{queue=Queue,message_count=MessageCount,consumer_count=ConsumerCount}=amqp_channel:call(Channel,QueueDeclare),
+  #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
   #'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=binary(Exchange),routing_key=binary(RK)}),
   io:format(" [*] Waiting for messages. To exit press CTRL+C~n"),
   {ok,#maui_server{
          channel=Channel,
          connection=Connection,
-         consumer_count=ConsumerCount+1,
          consumer_tag=ConsumerTag,
          exchange=binary(Exchange),
-         message_count=MessageCount+1,
          queue=Queue,
          routing_key=binary(RK)
        },timeout_millseconds()}.
@@ -138,24 +153,34 @@ handle_cast({publish,Msg},#maui_server{channel=Channel,exchange=Exchange,routing
                    headers=Headers
                   },
   ok=amqp_channel:cast(Channel,BasicPublish,#'amqp_msg'{props=Props,payload=binary(Msg)}),
+  ok=ack_message(Channel,?RABBIT_PERSISTENT_DELIVERY),
   Message = "Published\nPayload: ~p~n",
   io:format(Message,[jsx:decode(Msg)]),
-  {noreply,State};
+  {noreply,State,timeout_millseconds()};
 handle_cast(_Msg,State) -> {noreply,State}.
 
 -spec handle_info(atom(),map()) -> no_return() |
                                    {noreply,map(),non_neg_integer()} |
                                    {stop,atom(),map()}.
 handle_info(timeout,#maui_server{channel=Channel,exchange=Exchange,routing_key=RK}=State) ->
+  Headers=[{<<"company">>,binary,<<"StarTech">>}],
   amqp_channel:register_return_handler(Channel,self()),
   amqp_channel:register_confirm_handler(Channel,self()),
-  %amqp_channel:call(Channel,#'confirm.select'{nowait=true}),
   Term=#{age=>generate_age(),city=>generate_city(),name=>generate_name()},
-  Props=#'P_basic'{delivery_mode=?RABBIT_PERSISTENT_DELIVERY,content_type=?RABBIT_CONTENT_TYPE},
+  Props=#'P_basic'{content_type=?RABBIT_CONTENT_TYPE
+                  ,delivery_mode=?RABBIT_PERSISTENT_DELIVERY
+                  ,headers=Headers
+                  ,message_id=generate_msg_id()
+                  ,timestamp=time_since_epoch()
+                  },
   Msg=#'amqp_msg'{props=Props,payload=jsx:encode(Term)},
-  amqp_channel:cast(Channel,#'basic.publish'{exchange=Exchange,mandatory=true,routing_key=RK},Msg),
+  BasicPublish=#'basic.publish'{exchange=Exchange,mandatory=true,routing_key=RK},
+  ok=amqp_channel:cast(Channel,BasicPublish,Msg),
   io:format("~s~n",[jsx:encode(Term)]),
   {noreply,State,timeout_millseconds()};
+handle_info({#'basic.return'{reply_text=?RABBIT_UNROUTABLE,exchange=Exchange},Payload},State) ->
+  error_logger:error_msg("unroutable (~p): ~p",[?MODULE,Exchange]),
+  {stop,{unroutable,Exchange,Payload},State};
 handle_info(Info,State) ->
   io:format("unexpected info: ~p~n",[Info]),
   {noreply,State}.
@@ -287,6 +312,7 @@ declare_publish(Exchanges,Msg,RK)
   {ok,Channel}=amqp_connection:open_channel(Connection),
   [Publish]=[#'basic.publish'{exchange=element(1,E),mandatory=true,routing_key=RK} || E <- Exchanges],
   amqp_channel:call(Channel,Publish,#amqp_msg{payload=Msg}),
+  ok=ack_message(Channel,?RABBIT_PERSISTENT_DELIVERY),
   amqp_channel:close(Channel),
   amqp_connection:close(Connection),
   ok.
