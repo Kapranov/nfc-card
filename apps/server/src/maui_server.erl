@@ -71,11 +71,13 @@ off() ->
 
 consumer_start(Channel,Queue,Consumer)
   when is_pid(Channel) and is_pid(Consumer) ->
+  %{ok,QueueName}=application:get_env(server,rabbit_queue1),
   proc_lib:start(?SERVER,consumer_init,[Channel,Queue,Consumer],10000).
 
 consumer_init(Channel,Queue,Consumer) ->
+  {ok,ConsumerName}=application:get_env(server,rabbit_consumer1),
   BasicConsume=#'basic.consume'{queue=binary(Queue)
-                               ,consumer_tag = <<"">>
+                               ,consumer_tag =ConsumerName
                                ,no_local=false
                                ,no_ack=true
                                ,exclusive=false
@@ -115,8 +117,19 @@ consumer_loop(#consumer_state{channel=Channel,channel_ref=ChannelRef,consumer=Co
       io:format("rpc reply: ~p~n",[Payload]),
       basic_cancel(Channel,ConsumerTag),
       Consumer ! {reply,Payload};
+    {#'basic.deliver'{consumer_tag=ConsumerTag,delivery_tag=_DeliveryTag,exchange=_Exchange,routing_key=RoutingKey},#'amqp_msg'{props=Properties,payload=Payload}} ->
+      io:format("#1 COMMAN Deliver:~s~n",[Payload]),
+      #'P_basic'{content_type=_ContentType
+                ,delivery_mode=_DeliveryMode
+                ,headers=Headers
+                ,message_id=_MessageId
+                ,priority=_Priority
+                ,timestamp=_TimeStamp
+                }=Properties,
+      Consumer ! {deliver,RoutingKey,Headers,Payload},
+      consumer_loop(ConsumerState);
     {#'basic.deliver'{consumer_tag=ConsumerTag,delivery_tag=_DeliveryTag,redelivered=_Redelivered,exchange=_Exchange,routing_key=RoutingKey},#'amqp_msg'{props=Properties,payload=Payload}} ->
-      io:format("COMMAN Deliver:~p~n",[Payload]),
+      io:format("#2 COMMAN Deliver:~p~n",[Payload]),
       #'P_basic'{content_type=ContentType,correlation_id=CorrelationId,reply_to=ReplyTo}=Properties,
       Header=[{content_type,ContentType},{correlation_id,CorrelationId},{reply_to,ReplyTo}],
       Consumer ! {deliver,RoutingKey,Header,Payload},
