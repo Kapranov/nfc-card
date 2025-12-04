@@ -1,4 +1,5 @@
--ifndef(_BASE_AMQP_HRL_).
+-ifndef(MAUI_CLIENT_HRL).
+-define(MAUI_CLIENT_HRL, true).
 -define(DBG(F, A), io:format("DBG: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
 -define(DEFAULT_TIMEOUT,100).
 -define(ERR(F, A), io:format("***ERR***: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
@@ -16,6 +17,7 @@
 -define(RABBIT_PAYLOAD_DATA,#{name => <<"Nakamura">>,age => 22,city => <<"Oahu">>}).
 -define(RABBIT_PERSISTENT_DELIVERY,2).
 -define(RABBIT_PORT,5672).
+-define(RABBIT_PRIORITY,0).
 -define(RABBIT_QUEUE1,<<"test_aloha1">>).
 -define(RABBIT_QUEUE2,<<"test_aloha2">>).
 -define(RABBIT_QUEUE3,<<"test_aloha3">>).
@@ -43,24 +45,10 @@
 -define(RABBIT_UNROUTABLE,<<"unroutable">>).
 -define(RABBIT_USERNAME,<<"guest">>).
 -define(SERVER,?MODULE).
--define(_BASE_AMQP_HRL_,true).
-
 -record(maui_client,{channel :: pid()
                     ,connection :: pid()
                     ,consumer_tag :: string()
                     ,queue :: string()
-                    }).
--record(maui_server,{channel :: pid()
-                    ,connection :: pid()
-                    ,consumer_tag :: string()
-                    ,content_type :: binary()
-                    ,delivery_tag :: non_neg_integer()
-                    ,exchange :: string()
-                    ,headers :: list()
-                    ,message_id :: string()
-                    ,queue :: string()
-                    ,routing_key :: string()
-                    ,timestamp :: non_neg_integer()
                     }).
 -record(base_amqp_ack, {delivery_tag}).
 -endif.

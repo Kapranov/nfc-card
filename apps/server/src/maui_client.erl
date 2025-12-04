@@ -20,7 +20,7 @@
         ]).
 
 -include("./_build/default/lib/amqp_client/include/amqp_client.hrl").
--include("./apps/server/include/base.hrl").
+-include("./apps/server/include/maui_client.hrl").
 
 -spec binary(atom() | list() | binary()) -> binary().
 binary(A) when is_atom(A) -> list_to_binary(atom_to_list(A));
@@ -65,8 +65,7 @@ amqp_params() ->
                                   ignore |
                                   {error,{already_started,pid()}}.
 start_link(Queue,ConsumerTag)
-    when is_binary(Queue),
-         is_binary(ConsumerTag) ->
+    when is_binary(Queue) and is_binary(ConsumerTag) ->
       ?INFO("Starting: ~p ~p",[Queue,ConsumerTag]),
       {ok,Pid}=gen_server:start_link({local,?SERVER},?SERVER,[Queue,ConsumerTag],[]),
       io:format("Server started with Pid: ~p~n",[Pid]),
@@ -104,6 +103,7 @@ start() ->
                       ignore |
                       {stop,atom()}.
 init([Queue,ConsumerTag]) ->
+  process_flag(trap_exit, true),
   ?DBG("~nQueue:       ~p" "~nConsumerTag: ~p" "~n",[Queue,ConsumerTag]),
   {ok,Connection}=amqp_connection:start(amqp_params()),
   {ok,Channel}=amqp_connection:open_channel(Connection),
@@ -170,17 +170,19 @@ retrieve(Channel) ->
   receive
     {#'basic.deliver'{consumer_tag=_ConsumerTag,delivery_tag=_DeliveryTag,exchange=_Exchange,routing_key=_RoutingKey},#'amqp_msg'{payload=Payload,props=Props}} ->
       #'P_basic'{content_type=ContentType
-                ,headers=Header
                 ,delivery_mode=DeliveryMode
+                ,headers=Header
                 ,message_id=MessageId
+                ,priority=Priority
                 ,timestamp=TimeStamp
                 }=Props,
-      NewProps={'P_basic',ContentType,Header,DeliveryMode,MessageId,TimeStamp},
+      NewProps={'P_basic',ContentType,Header,DeliveryMode,MessageId,Priority,TimeStamp},
       %io:format("~w ~n", [NewProps]),
       error_logger:info_msg("basic deliver (~p): ~w~n",[?MODULE,NewProps]),
       io:format(" [x] JsonBinary received message: ~p~n",[Payload]),
       Message = "Basic return\nPayload: ~p~n",
       io:format(Message,[jsx:decode(Payload)]),
+      ?INFO("Data: ~p", [jsx:decode(Payload)]),
       retrieve(Channel);
     _Others ->
       retrieve(Channel)
