@@ -4,6 +4,7 @@
 -behaviour(gen_server).
 
 -export([ack_message/2
+        ,amqp_params/0
         ,cleanup/0
         ,code_change/3
         ,generate_msg_id/0
@@ -18,6 +19,8 @@
         ,start_link/5
         ,stop/0
         ,terminate/2
+        ,consumer_start/3
+        ,consumer_init/3
         ]).
 
 -include("./_build/default/lib/amqp_client/include/amqp_client.hrl").
@@ -65,6 +68,82 @@ ack_message(Channel,DeliveryTag) ->
 off() ->
   init:stop(),
   halt().
+
+consumer_start(Channel,Queue,Consumer)
+  when is_pid(Channel) and is_pid(Consumer) ->
+  proc_lib:start(?SERVER,consumer_init,[Channel,Queue,Consumer],10000).
+
+consumer_init(Channel,Queue,Consumer) ->
+  BasicConsume=#'basic.consume'{queue=binary(Queue)
+                               ,consumer_tag = <<"">>
+                               ,no_local=false
+                               ,no_ack=true
+                               ,exclusive=false
+                               ,nowait=false
+                               },
+  case amqp_channel:subscribe(Channel,BasicConsume,self()) of
+    #'basic.consume_ok'{consumer_tag=_Tag} ->
+      receive
+        #'basic.consume_ok'{consumer_tag=ConsumerTag} ->
+          proc_lib:init_ack({ok,self(),ConsumerTag}),
+          ChannelRef=erlang:monitor(process,Channel),
+          ConsumerRef=erlang:monitor(process,Consumer),
+          ConsumerState=#consumer_state{channel=Channel
+                                       ,channel_ref=ChannelRef
+                                       ,consumer=Consumer
+                                       ,consumer_ref=ConsumerRef
+                                       ,consumer_tag=ConsumerTag
+                                       },
+          consumer_loop(ConsumerState);
+        Msg ->
+          error_logger:error_msg("error consume result:~p~n",[Msg]),
+          proc_lib:init_ack({error,consume_error})
+      after
+        5_000 ->
+          proc_lib:init_ack({error, consume_timeout})
+      end;
+    Result ->
+      error_logger:error_msg("error subscribe result:~p~n",[Result]),
+      proc_lib:init_ack({error,subscribe_error})
+  end.
+
+consumer_loop(#consumer_state{channel=Channel,channel_ref=ChannelRef,consumer=Consumer,consumer_ref=_ConsumerRef,consumer_tag=ConsumerTag,correlation_id=RpcCorrelationId}=ConsumerState) ->
+  receive
+    {rpc,correlation_id,CorrelationId} ->
+      consumer_loop(ConsumerState#consumer_state{correlation_id=CorrelationId});
+    {#'basic.deliver'{consumer_tag=ConsumerTag},#'amqp_msg'{props=#'P_basic'{correlation_id=RpcCorrelationId},payload=Payload}} ->
+      io:format("rpc reply: ~p~n",[Payload]),
+      basic_cancel(Channel,ConsumerTag),
+      Consumer ! {reply,Payload};
+    {#'basic.deliver'{consumer_tag=ConsumerTag,delivery_tag=_DeliveryTag,redelivered=_Redelivered,exchange=_Exchange,routing_key=RoutingKey},#'amqp_msg'{props=Properties,payload=Payload}} ->
+      io:format("COMMAN Deliver:~p~n",[Payload]),
+      #'P_basic'{content_type=ContentType,correlation_id=CorrelationId,reply_to=ReplyTo}=Properties,
+      Header=[{content_type,ContentType},{correlation_id,CorrelationId},{reply_to,ReplyTo}],
+      Consumer ! {deliver,RoutingKey,Header,Payload},
+      consumer_loop(ConsumerState);
+    {#'basic.deliver'{consumer_tag=OtherTag},_Msg} ->
+      io:format("unexpected deliver to ~p," " error tag:~p~n",[ConsumerTag,OtherTag]),
+      consumer_loop(ConsumerState);
+    {'DOWN',ChannelRef,_Type,_Object,_Info} ->
+      {stop,channel_shutdown};
+    {'DOWN',onsumerRef,_Type,_Object,_Info} ->
+      io:format("Consumer Shutdown, begin to cancel~n"),
+      basic_cancel(Channel,ConsumerTag),
+      {stop,consumer_shutdown};
+    stop ->
+      basic_cancel(Channel,ConsumerTag),
+      {stop,normal};
+    Msg ->
+      error_logger:error_msg("amqp consumer received " "unexpected msg:~n~p~n",[Msg]),
+      consumer_loop(ConsumerState)
+  end.
+
+
+basic_cancel(Channel,ConsumerTag) ->
+  BasicCancel=#'basic.cancel'{nowait=false,consumer_tag=ConsumerTag},
+  #'basic.cancel_ok'{consumer_tag=ConsumerTag}=amqp_channel:call(Channel,BasicCancel),
+  ok.
+
 
 amqp_params() ->
   #amqp_params_network{

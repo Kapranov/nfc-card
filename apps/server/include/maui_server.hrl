@@ -59,4 +59,11 @@
                     ,timestamp :: non_neg_integer()
                     ,uniq :: binary()
                     }).
+-record(consumer_state,{channel
+                       ,channel_ref
+                       ,consumer
+                       ,consumer_ref
+                       ,consumer_tag
+                       ,correlation_id=none
+                       }).
 -endif.
