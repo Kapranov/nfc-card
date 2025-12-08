@@ -12,6 +12,7 @@
 -define(RABBIT_EXCHANGE1,<<"test_lahaina1">>).
 -define(RABBIT_EXCHANGE2,<<"test_lahaina2">>).
 -define(RABBIT_EXCHANGE3,<<"test_lahaina3">>).
+-define(RABBIT_HEARFBEAT,80).
 -define(RABBIT_HOST,"127.0.0.1").
 -define(RABBIT_PASSWORD,<<"guest">>).
 -define(RABBIT_PAYLOAD_DATA,#{name => <<"Nakamura">>,age => 22,city => <<"Oahu">>}).
@@ -41,6 +42,7 @@
 -define(RABBIT_TEST_ROUTING_KEY2,<<"test_routing_key2">>).
 -define(RABBIT_TEST_ROUTING_KEY3,<<"test_routing_key3">>).
 -define(RABBIT_TEST_TYPE,<<"direct">>).
+-define(RABBIT_VIRTUAL_HOST,<<"/">>).
 -define(RABBIT_UNKNOWN_KEY,<<"unknown_key">>).
 -define(RABBIT_UNROUTABLE,<<"unroutable">>).
 -define(RABBIT_USERNAME,<<"guest">>).
@@ -64,6 +66,5 @@
                        ,consumer
                        ,consumer_ref
                        ,consumer_tag
-                       ,correlation_id=none
                        }).
 -endif.

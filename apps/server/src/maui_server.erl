@@ -4,7 +4,8 @@
 -behaviour(gen_server).
 
 -export([ack_message/2
-        ,amqp_params/0
+        ,amqp_args/1
+        ,amqp_params/1
         ,cleanup/0
         ,code_change/3
         ,generate_msg_id/0
@@ -16,11 +17,12 @@
         ,publish/1
         ,queue/1
         ,start/0
-        ,start_link/5
+        ,start_link/6
         ,stop/0
         ,terminate/2
         ,consumer_start/3
         ,consumer_init/3
+        ,basic_cancel/2
         ]).
 
 -include("./_build/default/lib/amqp_client/include/amqp_client.hrl").
@@ -55,15 +57,6 @@ ack_message(Channel,DeliveryTag) ->
   Method=#'basic.ack'{delivery_tag=DeliveryTag},
   amqp_channel:call(Channel,Method).
 
--spec amqp_params() -> #amqp_params_network{
-                          connection_timeout :: non_neg_integer(),
-                          host :: string(),
-                          password :: string(),
-                          port :: non_neg_integer(),
-                          ssl_options :: atom(),
-                          username :: string()
-                         }.
-
 -spec off() -> no_return().
 off() ->
   init:stop(),
@@ -71,7 +64,6 @@ off() ->
 
 consumer_start(Channel,Queue,Consumer)
   when is_pid(Channel) and is_pid(Consumer) ->
-  %{ok,QueueName}=application:get_env(server,rabbit_queue1),
   proc_lib:start(?SERVER,consumer_init,[Channel,Queue,Consumer],10000).
 
 consumer_init(Channel,Queue,Consumer) ->
@@ -109,30 +101,28 @@ consumer_init(Channel,Queue,Consumer) ->
       proc_lib:init_ack({error,subscribe_error})
   end.
 
-consumer_loop(#consumer_state{channel=Channel,channel_ref=ChannelRef,consumer=Consumer,consumer_ref=_ConsumerRef,consumer_tag=ConsumerTag,correlation_id=RpcCorrelationId}=ConsumerState) ->
+consumer_loop(#consumer_state{channel=Channel
+                             ,channel_ref=ChannelRef
+                             ,consumer=Consumer
+                             ,consumer_ref=_ConsumerRef
+                             ,consumer_tag=ConsumerTag
+                             }=ConsumerState) ->
   receive
-    {rpc,correlation_id,CorrelationId} ->
-      consumer_loop(ConsumerState#consumer_state{correlation_id=CorrelationId});
-    {#'basic.deliver'{consumer_tag=ConsumerTag},#'amqp_msg'{props=#'P_basic'{correlation_id=RpcCorrelationId},payload=Payload}} ->
-      io:format("rpc reply: ~p~n",[Payload]),
-      basic_cancel(Channel,ConsumerTag),
-      Consumer ! {reply,Payload};
-    {#'basic.deliver'{consumer_tag=ConsumerTag,delivery_tag=_DeliveryTag,exchange=_Exchange,routing_key=RoutingKey},#'amqp_msg'{props=Properties,payload=Payload}} ->
+    {#'basic.deliver'{consumer_tag=ConsumerTag
+                     ,delivery_tag=_DeliveryTag
+                     ,exchange=_Exchange
+                     ,routing_key=RoutingKey
+                     },#'amqp_msg'{props=Properties,payload=Payload}} ->
       io:format("#1 COMMAN Deliver:~s~n",[Payload]),
-      #'P_basic'{content_type=_ContentType
+      #'P_basic'{content_type=ContentType
                 ,delivery_mode=_DeliveryMode
-                ,headers=Headers
-                ,message_id=_MessageId
+                ,headers=_Headers
+                ,message_id=MessageId
                 ,priority=_Priority
-                ,timestamp=_TimeStamp
+                ,timestamp=TimeStamp
                 }=Properties,
+      Headers=[{content_type,ContentType},{content_encoding,<<"UTF-8">>},{message_id,MessageId},{timestamp,TimeStamp}],
       Consumer ! {deliver,RoutingKey,Headers,Payload},
-      consumer_loop(ConsumerState);
-    {#'basic.deliver'{consumer_tag=ConsumerTag,delivery_tag=_DeliveryTag,redelivered=_Redelivered,exchange=_Exchange,routing_key=RoutingKey},#'amqp_msg'{props=Properties,payload=Payload}} ->
-      io:format("#2 COMMAN Deliver:~p~n",[Payload]),
-      #'P_basic'{content_type=ContentType,correlation_id=CorrelationId,reply_to=ReplyTo}=Properties,
-      Header=[{content_type,ContentType},{correlation_id,CorrelationId},{reply_to,ReplyTo}],
-      Consumer ! {deliver,RoutingKey,Header,Payload},
       consumer_loop(ConsumerState);
     {#'basic.deliver'{consumer_tag=OtherTag},_Msg} ->
       io:format("unexpected deliver to ~p," " error tag:~p~n",[ConsumerTag,OtherTag]),
@@ -151,24 +141,38 @@ consumer_loop(#consumer_state{channel=Channel,channel_ref=ChannelRef,consumer=Co
       consumer_loop(ConsumerState)
   end.
 
-
 basic_cancel(Channel,ConsumerTag) ->
   BasicCancel=#'basic.cancel'{nowait=false,consumer_tag=ConsumerTag},
   #'basic.cancel_ok'{consumer_tag=ConsumerTag}=amqp_channel:call(Channel,BasicCancel),
   ok.
 
+-spec amqp_args(list()) -> #amqp_params_network{
+                          connection_timeout :: non_neg_integer(),
+                          heartbeat :: non_neg_integer(),
+                          host :: string(),
+                          password :: string(),
+                          port :: non_neg_integer(),
+                          ssl_options :: atom(),
+                          username :: string(),
+                          virtual_host :: string()
+                         }.
+amqp_args(Config) ->
+  #amqp_params_network{connection_timeout=proplists:get_value(connection_timeout,Config)
+                      ,heartbeat=proplists:get_value(heartbeat,Config)
+                      ,host=proplists:get_value(host,Config)
+                      ,password=proplists:get_value(password,Config)
+                      ,port=proplists:get_value(port,Config)
+                      ,ssl_options=proplists:get_value(ssl_options,Config)
+                      ,username=proplists:get_value(username,Config)
+                      ,virtual_host=proplists:get_value(virtual_host,Config)
+                      }.
 
-amqp_params() ->
-  #amqp_params_network{
-     connection_timeout=?RABBIT_CONNECTION_TIMEOUT,
-     host=?RABBIT_HOST,
-     password=?RABBIT_PASSWORD,
-     port=?RABBIT_PORT,
-     ssl_options=?RABBIT_SSL_OPTIONS,
-     username=?RABBIT_USERNAME
-  }.
+-spec amqp_params(map()) -> map().
+amqp_params(Args) ->
+   amqp_options:parse(Args).
 
 -spec start_link(
+        Config::list(),
         Exchange::string(),
         Queue::string(),
         Type::string(),
@@ -176,31 +180,58 @@ amqp_params() ->
         ConsumerTag::string()) -> {ok,pid()} |
                                   atom() |
                                   {error,{already_started,pid()}}.
-start_link(Exchange,Queue,Type,RK,ConsumerTag) when is_binary(Exchange);
-                                                    is_binary(Queue);
-                                                    is_binary(Type);
-                                                    is_binary(RK);
-                                                    is_binary(ConsumerTag) ->
-  gen_server:start_link({local,?SERVER},?SERVER,[Exchange,Queue,Type,RK,ConsumerTag],[]).
+start_link(Config,Exchange,Queue,Type,RK,ConsumerTag) when is_list(Config);
+                                                           is_binary(Exchange);
+                                                           is_binary(Queue);
+                                                           is_binary(Type);
+                                                           is_binary(RK);
+                                                           is_binary(ConsumerTag) ->
+  gen_server:start_link({local,?SERVER},?SERVER,[Config,Exchange,Queue,Type,RK,ConsumerTag],[]).
 
 -spec stop() -> {reply,atom(),map()} |
                 {reply,atom(),map(),non_neg_integer()} |
                 no_return() |
                 {noreply,map(),non_neg_integer()} |
                 {stop,atom(),atom(),map()} |
-                {stop,atom(),map()}.
-stop() -> gen_server:call(?SERVER,stop,infinity).
+                {stop,atom(),map()} |
+                atom().
+stop() ->
+  try
+    gen_server:call(?SERVER,stop,infinity)
+  catch
+    exit:{noproc, _} -> ok
+  end.
 
 
--spec start()-> {ok,pid()} | atom() | {error,{already_started,pid()}}.
+-spec start()-> {ok,pid()} | atom().
 start() ->
-  {ok,RabbitType}=application:get_env(server,rabbit_type),
+  {ok,RabbitConnectionTimeout}=application:get_env(server,rabbit_connection_timeout),
   {ok,RabbitConsumer}=application:get_env(server,rabbit_consumer1),
   {ok,RabbitExchange}=application:get_env(server,rabbit_exchange1),
+  {ok,RabbitHeartbeat}=application:get_env(server,rabbit_heartbeat),
+  {ok,RabbitHost}=application:get_env(server,rabbit_host),
+  {ok,RabbitPassword}=application:get_env(server,rabbit_password),
+  {ok,RabbitPort}=application:get_env(server,rabbit_port),
   {ok,RabbitQueue}=application:get_env(server,rabbit_queue1),
   {ok,RabbitRoutingKey}=application:get_env(server,rabbit_routing_key1),
-  {ok,Pid}=maui_server:start_link(RabbitExchange,RabbitQueue,RabbitType,RabbitRoutingKey,RabbitConsumer),
-  {ok,Pid}.
+  {ok,RabbitSSLOptions}=application:get_env(server,rabbit_ssl_options),
+  {ok,RabbitType}=application:get_env(server,rabbit_type),
+  {ok,RabbitUsername}=application:get_env(server,rabbit_password),
+  {ok,RabbitVirtualHost}=application:get_env(server,rabbit_virtual_host),
+  Config=[{connection_timeout,RabbitConnectionTimeout}
+         ,{heartbeat,RabbitHeartbeat}
+         ,{host,RabbitHost}
+         ,{password,RabbitPassword}
+         ,{port,RabbitPort}
+         ,{ssl_options,RabbitSSLOptions}
+         ,{username,RabbitUsername}
+         ,{virtual_host,RabbitVirtualHost}
+         ],
+  case maui_server:start_link(Config,RabbitExchange,RabbitQueue,RabbitType,RabbitRoutingKey,RabbitConsumer) of
+    {ok,Pid} -> {ok,Pid};
+    {error,{already_started,_}} -> ok;
+    _error -> ok
+  end.
 
 cleanup() -> exit(?MODULE, kill).
 
@@ -218,9 +249,9 @@ publish(Msg) when is_map(Msg) ->
 queue(Name) ->
   gen_server:call(?SERVER,{queue, Name}).
 
-init([Exchange,Queue,Type,RK,ConsumerTag]) ->
+init([Config,Exchange,Queue,Type,RK,ConsumerTag]) ->
   process_flag(trap_exit,true),
-  {ok,Connection}=amqp_connection:start(amqp_params()),
+  {ok,Connection}=amqp_connection:start(amqp_params(amqp_args(Config))),
   {ok,Channel}=amqp_connection:open_channel(Connection),
   #'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{arguments=[{"main-exchange",longstr,Exchange}],exchange=binary(Exchange),type=binary(Type),durable=true}),
   Uniq=base64:encode(erlang:md5(term_to_binary(make_ref()))),
@@ -314,93 +345,117 @@ terminate(_Reason,_State) -> ok.
 -spec code_change(any(),map(),any()) -> {ok,map()}.
 code_change(_OldVsn,State,_Extra) -> {ok,State}.
 
+-if(?OTP_RELEASE > 23).
+-else.
+-endif.
+
 %%%_* Tests ============================================================
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
+-spec config() -> #amqp_params_network{
+                          connection_timeout :: non_neg_integer(),
+                          host :: string(),
+                          password :: string(),
+                          port :: non_neg_integer(),
+                          ssl_options :: atom(),
+                          username :: string()
+                         }.
+config() ->
+  #amqp_params_network{
+     connection_timeout=?RABBIT_CONNECTION_TIMEOUT,
+     heartbeat=?RABBIT_HEARFBEAT,
+     host=?RABBIT_HOST,
+     password=?RABBIT_PASSWORD,
+     port=?RABBIT_PORT,
+     ssl_options=?RABBIT_SSL_OPTIONS,
+     username=?RABBIT_USERNAME,
+     virtual_host=?RABBIT_VIRTUAL_HOST
+  }.
+
 -spec basic_test() -> ok.
 basic_test() ->
-  Durable      = true,
-  Msg1         = jsx:encode(?RABBIT_TEST_PAYLOAD1),
-  Msg2         = jsx:encode(?RABBIT_TEST_PAYLOAD2),
-  Msg3         = jsx:encode(?RABBIT_TEST_PAYLOAD3),
-  Queue1       = ?RABBIT_TEST_QUEUE1,
-  Queue2       = ?RABBIT_TEST_QUEUE2,
-  Queue3       = ?RABBIT_TEST_QUEUE3,
-  RK1          = ?RABBIT_TEST_ROUTING_KEY1,
-  RK2          = ?RABBIT_TEST_ROUTING_KEY2,
-  RK3          = ?RABBIT_TEST_ROUTING_KEY3,
-  Type         = ?RABBIT_TEST_TYPE,
-  Exchange1    = ?RABBIT_TEST_EXCHANGE1,
-  Exchange2    = ?RABBIT_TEST_EXCHANGE2,
-  Exchange3    = ?RABBIT_TEST_EXCHANGE3,
-  Exchanges1   = [{Exchange1,Type,Durable}],
-  Exchanges2   = [{Exchange2,Type,Durable}],
-  Exchanges3   = [{Exchange3,Type,Durable}],
-  ok           = declare_exchanges(Exchanges1,Queue1,RK1),
-  ok           = declare_exchanges(Exchanges1,Queue2,RK1),
-  ok           = declare_exchanges(Exchanges1,Queue3,RK1),
-  ok           = declare_exchanges(Exchanges1,Queue1,RK2),
-  ok           = declare_exchanges(Exchanges1,Queue2,RK2),
-  ok           = declare_exchanges(Exchanges1,Queue3,RK2),
-  ok           = declare_exchanges(Exchanges1,Queue1,RK3),
-  ok           = declare_exchanges(Exchanges1,Queue2,RK3),
-  ok           = declare_exchanges(Exchanges1,Queue3,RK3),
-  ok           = declare_exchanges(Exchanges2,Queue1,RK1),
-  ok           = declare_exchanges(Exchanges2,Queue2,RK1),
-  ok           = declare_exchanges(Exchanges2,Queue3,RK1),
-  ok           = declare_exchanges(Exchanges2,Queue1,RK2),
-  ok           = declare_exchanges(Exchanges2,Queue2,RK2),
-  ok           = declare_exchanges(Exchanges2,Queue3,RK2),
-  ok           = declare_exchanges(Exchanges2,Queue1,RK3),
-  ok           = declare_exchanges(Exchanges2,Queue2,RK3),
-  ok           = declare_exchanges(Exchanges2,Queue3,RK3),
-  ok           = declare_exchanges(Exchanges3,Queue1,RK1),
-  ok           = declare_exchanges(Exchanges3,Queue2,RK1),
-  ok           = declare_exchanges(Exchanges3,Queue3,RK1),
-  ok           = declare_exchanges(Exchanges3,Queue1,RK2),
-  ok           = declare_exchanges(Exchanges3,Queue2,RK2),
-  ok           = declare_exchanges(Exchanges3,Queue3,RK2),
-  ok           = declare_exchanges(Exchanges3,Queue1,RK3),
-  ok           = declare_exchanges(Exchanges3,Queue2,RK3),
-  ok           = declare_exchanges(Exchanges3,Queue3,RK3),
-  ok           = declare_publish(Exchanges1,Msg1,RK1),
-  ok           = declare_publish(Exchanges1,Msg2,RK1),
-  ok           = declare_publish(Exchanges1,Msg3,RK1),
-  ok           = declare_publish(Exchanges1,Msg1,RK2),
-  ok           = declare_publish(Exchanges1,Msg2,RK2),
-  ok           = declare_publish(Exchanges1,Msg3,RK2),
-  ok           = declare_publish(Exchanges1,Msg1,RK3),
-  ok           = declare_publish(Exchanges1,Msg2,RK3),
-  ok           = declare_publish(Exchanges1,Msg3,RK3),
-  ok           = declare_publish(Exchanges2,Msg1,RK1),
-  ok           = declare_publish(Exchanges2,Msg2,RK1),
-  ok           = declare_publish(Exchanges2,Msg3,RK1),
-  ok           = declare_publish(Exchanges2,Msg1,RK2),
-  ok           = declare_publish(Exchanges2,Msg2,RK2),
-  ok           = declare_publish(Exchanges2,Msg3,RK2),
-  ok           = declare_publish(Exchanges2,Msg1,RK3),
-  ok           = declare_publish(Exchanges2,Msg2,RK3),
-  ok           = declare_publish(Exchanges2,Msg3,RK3),
-  ok           = declare_publish(Exchanges3,Msg1,RK1),
-  ok           = declare_publish(Exchanges3,Msg2,RK1),
-  ok           = declare_publish(Exchanges3,Msg3,RK1),
-  ok           = declare_publish(Exchanges3,Msg1,RK2),
-  ok           = declare_publish(Exchanges3,Msg2,RK2),
-  ok           = declare_publish(Exchanges3,Msg3,RK2),
-  ok           = declare_publish(Exchanges3,Msg1,RK3),
-  ok           = declare_publish(Exchanges3,Msg2,RK3),
-  ok           = declare_publish(Exchanges3,Msg3,RK3),
-  ok           = wait_for_connections(?DEFAULT_TIMEOUT),
+  Durable                      = true,
+  Msg1                         = jsx:encode(?RABBIT_TEST_PAYLOAD1),
+  Msg2                         = jsx:encode(?RABBIT_TEST_PAYLOAD2),
+  Msg3                         = jsx:encode(?RABBIT_TEST_PAYLOAD3),
+  Queue1                       = ?RABBIT_TEST_QUEUE1,
+  Queue2                       = ?RABBIT_TEST_QUEUE2,
+  Queue3                       = ?RABBIT_TEST_QUEUE3,
+  RK1                          = ?RABBIT_TEST_ROUTING_KEY1,
+  RK2                          = ?RABBIT_TEST_ROUTING_KEY2,
+  RK3                          = ?RABBIT_TEST_ROUTING_KEY3,
+  Type                         = ?RABBIT_TEST_TYPE,
+  Exchange1                    = ?RABBIT_TEST_EXCHANGE1,
+  Exchange2                    = ?RABBIT_TEST_EXCHANGE2,
+  Exchange3                    = ?RABBIT_TEST_EXCHANGE3,
+  Exchanges1                   = [{Exchange1,Type,Durable}],
+  Exchanges2                   = [{Exchange2,Type,Durable}],
+  Exchanges3                   = [{Exchange3,Type,Durable}],
+  ok                           = declare_exchanges(Exchanges1,Queue1,RK1),
+  ok                           = declare_exchanges(Exchanges1,Queue2,RK1),
+  ok                           = declare_exchanges(Exchanges1,Queue3,RK1),
+  ok                           = declare_exchanges(Exchanges1,Queue1,RK2),
+  ok                           = declare_exchanges(Exchanges1,Queue2,RK2),
+  ok                           = declare_exchanges(Exchanges1,Queue3,RK2),
+  ok                           = declare_exchanges(Exchanges1,Queue1,RK3),
+  ok                           = declare_exchanges(Exchanges1,Queue2,RK3),
+  ok                           = declare_exchanges(Exchanges1,Queue3,RK3),
+  ok                           = declare_exchanges(Exchanges2,Queue1,RK1),
+  ok                           = declare_exchanges(Exchanges2,Queue2,RK1),
+  ok                           = declare_exchanges(Exchanges2,Queue3,RK1),
+  ok                           = declare_exchanges(Exchanges2,Queue1,RK2),
+  ok                           = declare_exchanges(Exchanges2,Queue2,RK2),
+  ok                           = declare_exchanges(Exchanges2,Queue3,RK2),
+  ok                           = declare_exchanges(Exchanges2,Queue1,RK3),
+  ok                           = declare_exchanges(Exchanges2,Queue2,RK3),
+  ok                           = declare_exchanges(Exchanges2,Queue3,RK3),
+  ok                           = declare_exchanges(Exchanges3,Queue1,RK1),
+  ok                           = declare_exchanges(Exchanges3,Queue2,RK1),
+  ok                           = declare_exchanges(Exchanges3,Queue3,RK1),
+  ok                           = declare_exchanges(Exchanges3,Queue1,RK2),
+  ok                           = declare_exchanges(Exchanges3,Queue2,RK2),
+  ok                           = declare_exchanges(Exchanges3,Queue3,RK2),
+  ok                           = declare_exchanges(Exchanges3,Queue1,RK3),
+  ok                           = declare_exchanges(Exchanges3,Queue2,RK3),
+  ok                           = declare_exchanges(Exchanges3,Queue3,RK3),
+  ok                           = declare_publish(Exchanges1,Msg1,RK1),
+  ok                           = declare_publish(Exchanges1,Msg2,RK1),
+  ok                           = declare_publish(Exchanges1,Msg3,RK1),
+  ok                           = declare_publish(Exchanges1,Msg1,RK2),
+  ok                           = declare_publish(Exchanges1,Msg2,RK2),
+  ok                           = declare_publish(Exchanges1,Msg3,RK2),
+  ok                           = declare_publish(Exchanges1,Msg1,RK3),
+  ok                           = declare_publish(Exchanges1,Msg2,RK3),
+  ok                           = declare_publish(Exchanges1,Msg3,RK3),
+  ok                           = declare_publish(Exchanges2,Msg1,RK1),
+  ok                           = declare_publish(Exchanges2,Msg2,RK1),
+  ok                           = declare_publish(Exchanges2,Msg3,RK1),
+  ok                           = declare_publish(Exchanges2,Msg1,RK2),
+  ok                           = declare_publish(Exchanges2,Msg2,RK2),
+  ok                           = declare_publish(Exchanges2,Msg3,RK2),
+  ok                           = declare_publish(Exchanges2,Msg1,RK3),
+  ok                           = declare_publish(Exchanges2,Msg2,RK3),
+  ok                           = declare_publish(Exchanges2,Msg3,RK3),
+  ok                           = declare_publish(Exchanges3,Msg1,RK1),
+  ok                           = declare_publish(Exchanges3,Msg2,RK1),
+  ok                           = declare_publish(Exchanges3,Msg3,RK1),
+  ok                           = declare_publish(Exchanges3,Msg1,RK2),
+  ok                           = declare_publish(Exchanges3,Msg2,RK2),
+  ok                           = declare_publish(Exchanges3,Msg3,RK2),
+  ok                           = declare_publish(Exchanges3,Msg1,RK3),
+  ok                           = declare_publish(Exchanges3,Msg2,RK3),
+  ok                           = declare_publish(Exchanges3,Msg3,RK3),
+  ok                           = wait_for_connections(?DEFAULT_TIMEOUT),
   [<<131,97,1>>,<<131,97,2>>,<<131,97,3>>,<<131,97,4>>]=basic_dataset(),
   ok.
 
 -spec declare_exchanges(string(),string(),string()) -> ok.
 declare_exchanges(Exchanges,Queue,RK)
-  when is_list(Exchanges) ,
+  when is_list(Exchanges),
        is_binary(Queue),
        is_binary(RK) ->
-  {ok,Connection}=amqp_connection:start(amqp_params()),
+  {ok,Connection}=amqp_connection:start(config()),
   {ok,Channel}=amqp_connection:open_channel(Connection),
   amqp_channel:register_return_handler(Channel,self()),
   amqp_channel:register_confirm_handler(Channel,self()),
@@ -424,10 +479,10 @@ declare_queue(Channel,Exchanges,Queue,RK)
 
 -spec declare_publish(string(),binary(),string()) -> ok.
 declare_publish(Exchanges,Msg,RK)
-  when is_list(Exchanges) ,
+  when is_list(Exchanges),
        is_binary(Msg),
        is_binary(RK) ->
-  {ok,Connection}=amqp_connection:start(amqp_params()),
+  {ok,Connection}=amqp_connection:start(config()),
   {ok,Channel}=amqp_connection:open_channel(Connection),
   [Publish]=[#'basic.publish'{exchange=element(1,E),mandatory=true,routing_key=RK} || E <- Exchanges],
   amqp_channel:call(Channel,Publish,#amqp_msg{payload=Msg}),

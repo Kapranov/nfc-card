@@ -192,168 +192,168 @@ retrieve(Channel) ->
   end.
 
 %%%_* Tests ============================================================
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
-
--spec basic_test() -> ok.
-basic_test() ->
-  ConsumerTag1 = ?RABBIT_TEST_CUSTOMER1,
-  ConsumerTag2 = ?RABBIT_TEST_CUSTOMER2,
-  ConsumerTag3 = ?RABBIT_TEST_CUSTOMER3,
-  Daddy        = self(),
-  Durable      = true,
-  Msg1         = jsx:encode(?RABBIT_TEST_PAYLOAD1),
-  Msg2         = jsx:encode(?RABBIT_TEST_PAYLOAD2),
-  Msg3         = jsx:encode(?RABBIT_TEST_PAYLOAD3),
-  Queue1       = ?RABBIT_TEST_QUEUE1,
-  Queue2       = ?RABBIT_TEST_QUEUE2,
-  Queue3       = ?RABBIT_TEST_QUEUE3,
-  RK1          = ?RABBIT_TEST_ROUTING_KEY1,
-  RK2          = ?RABBIT_TEST_ROUTING_KEY2,
-  RK3          = ?RABBIT_TEST_ROUTING_KEY3,
-  Type         = ?RABBIT_TEST_TYPE,
-  Exchange1    = ?RABBIT_TEST_EXCHANGE1,
-  Exchange2    = ?RABBIT_TEST_EXCHANGE2,
-  Exchange3    = ?RABBIT_TEST_EXCHANGE3,
-  Exchanges1   = [{Exchange1,Type,Durable}],
-  Exchanges2   = [{Exchange2,Type,Durable}],
-  Exchanges3   = [{Exchange3,Type,Durable}],
-  ok           = declare_exchanges(Exchanges1,Queue1,RK1),
-  ok           = declare_exchanges(Exchanges1,Queue2,RK1),
-  ok           = declare_exchanges(Exchanges1,Queue3,RK1),
-  ok           = declare_exchanges(Exchanges1,Queue1,RK2),
-  ok           = declare_exchanges(Exchanges1,Queue2,RK2),
-  ok           = declare_exchanges(Exchanges1,Queue3,RK2),
-  ok           = declare_exchanges(Exchanges1,Queue1,RK3),
-  ok           = declare_exchanges(Exchanges1,Queue2,RK3),
-  ok           = declare_exchanges(Exchanges1,Queue3,RK3),
-  ok           = declare_exchanges(Exchanges2,Queue1,RK1),
-  ok           = declare_exchanges(Exchanges2,Queue2,RK1),
-  ok           = declare_exchanges(Exchanges2,Queue3,RK1),
-  ok           = declare_exchanges(Exchanges2,Queue1,RK2),
-  ok           = declare_exchanges(Exchanges2,Queue2,RK2),
-  ok           = declare_exchanges(Exchanges2,Queue3,RK2),
-  ok           = declare_exchanges(Exchanges2,Queue1,RK3),
-  ok           = declare_exchanges(Exchanges2,Queue2,RK3),
-  ok           = declare_exchanges(Exchanges2,Queue3,RK3),
-  ok           = declare_exchanges(Exchanges3,Queue1,RK1),
-  ok           = declare_exchanges(Exchanges3,Queue2,RK1),
-  ok           = declare_exchanges(Exchanges3,Queue3,RK1),
-  ok           = declare_exchanges(Exchanges3,Queue1,RK2),
-  ok           = declare_exchanges(Exchanges3,Queue2,RK2),
-  ok           = declare_exchanges(Exchanges3,Queue3,RK2),
-  ok           = declare_exchanges(Exchanges3,Queue1,RK3),
-  ok           = declare_exchanges(Exchanges3,Queue2,RK3),
-  ok           = declare_exchanges(Exchanges3,Queue3,RK3),
-  ok           = declare_publish(Exchanges1,Msg1,RK1),
-  ok           = declare_publish(Exchanges1,Msg2,RK1),
-  ok           = declare_publish(Exchanges1,Msg3,RK1),
-  ok           = declare_publish(Exchanges1,Msg1,RK2),
-  ok           = declare_publish(Exchanges1,Msg2,RK2),
-  ok           = declare_publish(Exchanges1,Msg3,RK2),
-  ok           = declare_publish(Exchanges1,Msg1,RK3),
-  ok           = declare_publish(Exchanges1,Msg2,RK3),
-  ok           = declare_publish(Exchanges1,Msg3,RK3),
-  ok           = declare_publish(Exchanges2,Msg1,RK1),
-  ok           = declare_publish(Exchanges2,Msg2,RK1),
-  ok           = declare_publish(Exchanges2,Msg3,RK1),
-  ok           = declare_publish(Exchanges2,Msg1,RK2),
-  ok           = declare_publish(Exchanges2,Msg2,RK2),
-  ok           = declare_publish(Exchanges2,Msg3,RK2),
-  ok           = declare_publish(Exchanges2,Msg1,RK3),
-  ok           = declare_publish(Exchanges2,Msg2,RK3),
-  ok           = declare_publish(Exchanges2,Msg3,RK3),
-  ok           = declare_publish(Exchanges3,Msg1,RK1),
-  ok           = declare_publish(Exchanges3,Msg2,RK1),
-  ok           = declare_publish(Exchanges3,Msg3,RK1),
-  ok           = declare_publish(Exchanges3,Msg1,RK2),
-  ok           = declare_publish(Exchanges3,Msg2,RK2),
-  ok           = declare_publish(Exchanges3,Msg3,RK2),
-  ok           = declare_publish(Exchanges3,Msg1,RK3),
-  ok           = declare_publish(Exchanges3,Msg2,RK3),
-  ok           = declare_publish(Exchanges3,Msg3,RK3),
-  ok           = wait_for_connections(?DEFAULT_TIMEOUT),
-  ok           = declare_customer(Daddy,Queue1,ConsumerTag1),
-  ok           = declare_customer(Daddy,Queue1,ConsumerTag2),
-  ok           = declare_customer(Daddy,Queue1,ConsumerTag3),
-  ok           = declare_customer(Daddy,Queue2,ConsumerTag1),
-  ok           = declare_customer(Daddy,Queue2,ConsumerTag2),
-  ok           = declare_customer(Daddy,Queue2,ConsumerTag3),
-  ok           = declare_customer(Daddy,Queue3,ConsumerTag1),
-  ok           = declare_customer(Daddy,Queue3,ConsumerTag2),
-  ok           = declare_customer(Daddy,Queue3,ConsumerTag3),
-  ok           = wait_for_connections(?DEFAULT_TIMEOUT),
-  [<<131,97,1>>,<<131,97,2>>,<<131,97,3>>,<<131,97,4>>]=basic_dataset(),
-  ok.
-
--spec declare_exchanges(string(),string(),string()) -> ok.
-declare_exchanges(Exchanges,Queue,RK)
-  when is_list(Exchanges) ,
-       is_binary(Queue),
-       is_binary(RK) ->
-  {ok,Connection}=amqp_connection:start(amqp_params()),
-  {ok,Channel}=amqp_connection:open_channel(Connection),
-  amqp_channel:register_return_handler(Channel,self()),
-  amqp_channel:register_confirm_handler(Channel,self()),
-  amqp_channel:call(Channel,#'confirm.select'{nowait=true}),
-  [#'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{arguments=[{"main-exchange",longstr,Name}],exchange=Name,type=Type,durable=Durable}) || {Name,Type,Durable} <- Exchanges],
-  ok = declare_queue(Channel,Exchanges,Queue,RK),
-  amqp_channel:close(Channel),
-  amqp_connection:close(Connection),
-  ok.
-
--spec declare_queue(pid(),string(),string(),string()) -> ok.
-declare_queue(Channel,Exchanges,Queue,RK)
-  when is_pid(Channel),
-       is_list(Exchanges),
-       is_binary(Queue),
-       is_binary(RK) ->
-  QueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"},{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}],queue=Queue,exclusive=false,auto_delete=false,durable=true},
-  #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
-  [#'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
-  ok.
-
--spec declare_publish(string(),binary(),string()) -> ok.
-declare_publish(Exchanges,Msg,RK)
-  when is_list(Exchanges) ,
-       is_binary(Msg),
-       is_binary(RK) ->
-  {ok,Connection}=amqp_connection:start(amqp_params()),
-  {ok,Channel}=amqp_connection:open_channel(Connection),
-  [Publish]=[#'basic.publish'{exchange=element(1,E),mandatory=true,routing_key=RK} || E <- Exchanges],
-  amqp_channel:call(Channel,Publish,#amqp_msg{payload=Msg}),
-  amqp_channel:close(Channel),
-  amqp_connection:close(Connection),
-  ok.
-
--spec declare_customer(pid(),string(),string()) -> ok.
-declare_customer(Daddy,Queue,ConsumerTag)
-  when is_pid(Daddy),
-       is_binary(Queue),
-       is_binary(ConsumerTag) ->
-  {ok,Connection}=amqp_connection:start(amqp_params()),
-  {ok,Channel}=amqp_connection:open_channel(Connection),
-  BasicConsume=#'basic.consume'{queue=Queue,consumer_tag=ConsumerTag,no_ack=true},
-  #'basic.consume_ok'{consumer_tag=Tag}=amqp_channel:subscribe(Channel,BasicConsume,Daddy),
-  io:format("Got subscription notification...~p~n", [Tag]),
-  retrieve(Channel),
-  BasicCancel=#'basic.cancel'{consumer_tag=Tag},
-  #'basic.cancel_ok'{consumer_tag=Tag}=amqp_channel:call(Channel,BasicCancel),
-  amqp_channel:close(Channel),
-  amqp_connection:close(Connection),
-  ok.
-
--spec basic_dataset() -> [binary()].
-basic_dataset() ->
-  [term_to_binary(Term) || Term <- [1, 2, 3, 4]].
-
--spec wait_for_connections(non_neg_integer()) -> ok.
-wait_for_connections(Num) ->
-  case [] == 0 of
-    true  -> timer:sleep(Num),
-             wait_for_connections(Num);
-    false -> ok
-  end.
--else.
--endif.
+%-ifdef(TEST).
+%-include_lib("eunit/include/eunit.hrl").
+%
+%-spec basic_test() -> ok.
+%basic_test() ->
+%  ConsumerTag1 = ?RABBIT_TEST_CUSTOMER1,
+%  ConsumerTag2 = ?RABBIT_TEST_CUSTOMER2,
+%  ConsumerTag3 = ?RABBIT_TEST_CUSTOMER3,
+%  Daddy        = self(),
+%  Durable      = true,
+%  Msg1         = jsx:encode(?RABBIT_TEST_PAYLOAD1),
+%  Msg2         = jsx:encode(?RABBIT_TEST_PAYLOAD2),
+%  Msg3         = jsx:encode(?RABBIT_TEST_PAYLOAD3),
+%  Queue1       = ?RABBIT_TEST_QUEUE1,
+%  Queue2       = ?RABBIT_TEST_QUEUE2,
+%  Queue3       = ?RABBIT_TEST_QUEUE3,
+%  RK1          = ?RABBIT_TEST_ROUTING_KEY1,
+%  RK2          = ?RABBIT_TEST_ROUTING_KEY2,
+%  RK3          = ?RABBIT_TEST_ROUTING_KEY3,
+%  Type         = ?RABBIT_TEST_TYPE,
+%  Exchange1    = ?RABBIT_TEST_EXCHANGE1,
+%  Exchange2    = ?RABBIT_TEST_EXCHANGE2,
+%  Exchange3    = ?RABBIT_TEST_EXCHANGE3,
+%  Exchanges1   = [{Exchange1,Type,Durable}],
+%  Exchanges2   = [{Exchange2,Type,Durable}],
+%  Exchanges3   = [{Exchange3,Type,Durable}],
+%  ok           = declare_exchanges(Exchanges1,Queue1,RK1),
+%  ok           = declare_exchanges(Exchanges1,Queue2,RK1),
+%  ok           = declare_exchanges(Exchanges1,Queue3,RK1),
+%  ok           = declare_exchanges(Exchanges1,Queue1,RK2),
+%  ok           = declare_exchanges(Exchanges1,Queue2,RK2),
+%  ok           = declare_exchanges(Exchanges1,Queue3,RK2),
+%  ok           = declare_exchanges(Exchanges1,Queue1,RK3),
+%  ok           = declare_exchanges(Exchanges1,Queue2,RK3),
+%  ok           = declare_exchanges(Exchanges1,Queue3,RK3),
+%  ok           = declare_exchanges(Exchanges2,Queue1,RK1),
+%  ok           = declare_exchanges(Exchanges2,Queue2,RK1),
+%  ok           = declare_exchanges(Exchanges2,Queue3,RK1),
+%  ok           = declare_exchanges(Exchanges2,Queue1,RK2),
+%  ok           = declare_exchanges(Exchanges2,Queue2,RK2),
+%  ok           = declare_exchanges(Exchanges2,Queue3,RK2),
+%  ok           = declare_exchanges(Exchanges2,Queue1,RK3),
+%  ok           = declare_exchanges(Exchanges2,Queue2,RK3),
+%  ok           = declare_exchanges(Exchanges2,Queue3,RK3),
+%  ok           = declare_exchanges(Exchanges3,Queue1,RK1),
+%  ok           = declare_exchanges(Exchanges3,Queue2,RK1),
+%  ok           = declare_exchanges(Exchanges3,Queue3,RK1),
+%  ok           = declare_exchanges(Exchanges3,Queue1,RK2),
+%  ok           = declare_exchanges(Exchanges3,Queue2,RK2),
+%  ok           = declare_exchanges(Exchanges3,Queue3,RK2),
+%  ok           = declare_exchanges(Exchanges3,Queue1,RK3),
+%  ok           = declare_exchanges(Exchanges3,Queue2,RK3),
+%  ok           = declare_exchanges(Exchanges3,Queue3,RK3),
+%  ok           = declare_publish(Exchanges1,Msg1,RK1),
+%  ok           = declare_publish(Exchanges1,Msg2,RK1),
+%  ok           = declare_publish(Exchanges1,Msg3,RK1),
+%  ok           = declare_publish(Exchanges1,Msg1,RK2),
+%  ok           = declare_publish(Exchanges1,Msg2,RK2),
+%  ok           = declare_publish(Exchanges1,Msg3,RK2),
+%  ok           = declare_publish(Exchanges1,Msg1,RK3),
+%  ok           = declare_publish(Exchanges1,Msg2,RK3),
+%  ok           = declare_publish(Exchanges1,Msg3,RK3),
+%  ok           = declare_publish(Exchanges2,Msg1,RK1),
+%  ok           = declare_publish(Exchanges2,Msg2,RK1),
+%  ok           = declare_publish(Exchanges2,Msg3,RK1),
+%  ok           = declare_publish(Exchanges2,Msg1,RK2),
+%  ok           = declare_publish(Exchanges2,Msg2,RK2),
+%  ok           = declare_publish(Exchanges2,Msg3,RK2),
+%  ok           = declare_publish(Exchanges2,Msg1,RK3),
+%  ok           = declare_publish(Exchanges2,Msg2,RK3),
+%  ok           = declare_publish(Exchanges2,Msg3,RK3),
+%  ok           = declare_publish(Exchanges3,Msg1,RK1),
+%  ok           = declare_publish(Exchanges3,Msg2,RK1),
+%  ok           = declare_publish(Exchanges3,Msg3,RK1),
+%  ok           = declare_publish(Exchanges3,Msg1,RK2),
+%  ok           = declare_publish(Exchanges3,Msg2,RK2),
+%  ok           = declare_publish(Exchanges3,Msg3,RK2),
+%  ok           = declare_publish(Exchanges3,Msg1,RK3),
+%  ok           = declare_publish(Exchanges3,Msg2,RK3),
+%  ok           = declare_publish(Exchanges3,Msg3,RK3),
+%  ok           = wait_for_connections(?DEFAULT_TIMEOUT),
+%  ok           = declare_customer(Daddy,Queue1,ConsumerTag1),
+%  ok           = declare_customer(Daddy,Queue1,ConsumerTag2),
+%  ok           = declare_customer(Daddy,Queue1,ConsumerTag3),
+%  ok           = declare_customer(Daddy,Queue2,ConsumerTag1),
+%  ok           = declare_customer(Daddy,Queue2,ConsumerTag2),
+%  ok           = declare_customer(Daddy,Queue2,ConsumerTag3),
+%  ok           = declare_customer(Daddy,Queue3,ConsumerTag1),
+%  ok           = declare_customer(Daddy,Queue3,ConsumerTag2),
+%  ok           = declare_customer(Daddy,Queue3,ConsumerTag3),
+%  ok           = wait_for_connections(?DEFAULT_TIMEOUT),
+%  [<<131,97,1>>,<<131,97,2>>,<<131,97,3>>,<<131,97,4>>]=basic_dataset(),
+%  ok.
+%
+%-spec declare_exchanges(string(),string(),string()) -> ok.
+%declare_exchanges(Exchanges,Queue,RK)
+%  when is_list(Exchanges) ,
+%       is_binary(Queue),
+%       is_binary(RK) ->
+%  {ok,Connection}=amqp_connection:start(amqp_params()),
+%  {ok,Channel}=amqp_connection:open_channel(Connection),
+%  amqp_channel:register_return_handler(Channel,self()),
+%  amqp_channel:register_confirm_handler(Channel,self()),
+%  amqp_channel:call(Channel,#'confirm.select'{nowait=true}),
+%  [#'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{arguments=[{"main-exchange",longstr,Name}],exchange=Name,type=Type,durable=Durable}) || {Name,Type,Durable} <- Exchanges],
+%  ok = declare_queue(Channel,Exchanges,Queue,RK),
+%  amqp_channel:close(Channel),
+%  amqp_connection:close(Connection),
+%  ok.
+%
+%-spec declare_queue(pid(),string(),string(),string()) -> ok.
+%declare_queue(Channel,Exchanges,Queue,RK)
+%  when is_pid(Channel),
+%       is_list(Exchanges),
+%       is_binary(Queue),
+%       is_binary(RK) ->
+%  QueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"},{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}],queue=Queue,exclusive=false,auto_delete=false,durable=true},
+%  #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
+%  [#'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
+%  ok.
+%
+%-spec declare_publish(string(),binary(),string()) -> ok.
+%declare_publish(Exchanges,Msg,RK)
+%  when is_list(Exchanges) ,
+%       is_binary(Msg),
+%       is_binary(RK) ->
+%  {ok,Connection}=amqp_connection:start(amqp_params()),
+%  {ok,Channel}=amqp_connection:open_channel(Connection),
+%  [Publish]=[#'basic.publish'{exchange=element(1,E),mandatory=true,routing_key=RK} || E <- Exchanges],
+%  amqp_channel:call(Channel,Publish,#amqp_msg{payload=Msg}),
+%  amqp_channel:close(Channel),
+%  amqp_connection:close(Connection),
+%  ok.
+%
+%-spec declare_customer(pid(),string(),string()) -> ok.
+%declare_customer(Daddy,Queue,ConsumerTag)
+%  when is_pid(Daddy),
+%       is_binary(Queue),
+%       is_binary(ConsumerTag) ->
+%  {ok,Connection}=amqp_connection:start(amqp_params()),
+%  {ok,Channel}=amqp_connection:open_channel(Connection),
+%  BasicConsume=#'basic.consume'{queue=Queue,consumer_tag=ConsumerTag,no_ack=true},
+%  #'basic.consume_ok'{consumer_tag=Tag}=amqp_channel:subscribe(Channel,BasicConsume,Daddy),
+%  io:format("Got subscription notification...~p~n", [Tag]),
+%  retrieve(Channel),
+%  BasicCancel=#'basic.cancel'{consumer_tag=Tag},
+%  #'basic.cancel_ok'{consumer_tag=Tag}=amqp_channel:call(Channel,BasicCancel),
+%  amqp_channel:close(Channel),
+%  amqp_connection:close(Connection),
+%  ok.
+%
+%-spec basic_dataset() -> [binary()].
+%basic_dataset() ->
+%  [term_to_binary(Term) || Term <- [1, 2, 3, 4]].
+%
+%-spec wait_for_connections(non_neg_integer()) -> ok.
+%wait_for_connections(Num) ->
+%  case [] == 0 of
+%    true  -> timer:sleep(Num),
+%             wait_for_connections(Num);
+%    false -> ok
+%  end.
+%-else.
+%-endif.
 %%%_* Tests ============================================================

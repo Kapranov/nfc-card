@@ -34,13 +34,12 @@ parse([_ | R], Acc) ->
    parse(R, Acc).
 
 amqp_params(Config) ->
-   #amqp_params_network{
-      username = proplists:get_value(user, Config, <<"guest">>),
-      password = proplists:get_value(pass, Config, <<"guest">>),
-      virtual_host = proplists:get_value(vhost, Config, <<"/">>),
-      port = proplists:get_value(port, Config),
-      host = proplists:get_value(host, Config),
-      heartbeat = proplists:get_value(heartbeat, Config, 80),
-      connection_timeout = proplists:get_value(connection_timeout, Config, 7000),
-      ssl_options = proplists:get_value(ssl_opts, Config, none)
-   }.
+   #amqp_params_network{connection_timeout=proplists:get_value(connection_timeout,Config,7_000)
+                       ,heartbeat=proplists:get_value(heartbeat,Config,80)
+                       ,host=proplists:get_value(host,Config)
+                       ,password=proplists:get_value(password,Config,<<"guest">>)
+                       ,port=proplists:get_value(port,Config)
+                       ,ssl_options=proplists:get_value(ssl_options,Config,none)
+                       ,username=proplists:get_value(user,Config,<<"guest">>)
+                       ,virtual_host=proplists:get_value(virtual_host,Config,<<"/">>)
+                       }.
