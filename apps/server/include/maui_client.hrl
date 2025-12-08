@@ -12,6 +12,7 @@
 -define(RABBIT_EXCHANGE1,<<"test_lahaina1">>).
 -define(RABBIT_EXCHANGE2,<<"test_lahaina2">>).
 -define(RABBIT_EXCHANGE3,<<"test_lahaina3">>).
+-define(RABBIT_HEARFBEAT,80).
 -define(RABBIT_HOST,"127.0.0.1").
 -define(RABBIT_PASSWORD,<<"guest">>).
 -define(RABBIT_PAYLOAD_DATA,#{name => <<"Nakamura">>,age => 22,city => <<"Oahu">>}).
@@ -44,6 +45,7 @@
 -define(RABBIT_UNKNOWN_KEY,<<"unknown_key">>).
 -define(RABBIT_UNROUTABLE,<<"unroutable">>).
 -define(RABBIT_USERNAME,<<"guest">>).
+-define(RABBIT_VIRTUAL_HOST,<<"/">>).
 -define(SERVER,?MODULE).
 -record(maui_client,{channel :: pid()
                     ,connection :: pid()

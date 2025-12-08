@@ -6,8 +6,11 @@
 -export([ack_message/2
         ,amqp_args/1
         ,amqp_params/1
+        ,basic_cancel/2
         ,cleanup/0
         ,code_change/3
+        ,consumer_init/3
+        ,consumer_start/3
         ,generate_msg_id/0
         ,handle_call/3
         ,handle_cast/2
@@ -20,9 +23,7 @@
         ,start_link/6
         ,stop/0
         ,terminate/2
-        ,consumer_start/3
-        ,consumer_init/3
-        ,basic_cancel/2
+        ,time_since_epoch/0
         ]).
 
 -include("./_build/default/lib/amqp_client/include/amqp_client.hrl").
@@ -121,7 +122,10 @@ consumer_loop(#consumer_state{channel=Channel
                 ,priority=_Priority
                 ,timestamp=TimeStamp
                 }=Properties,
-      Headers=[{content_type,ContentType},{content_encoding,<<"UTF-8">>},{message_id,MessageId},{timestamp,TimeStamp}],
+      Headers=[{content_type,ContentType}
+              ,{content_encoding,<<"UTF-8">>}
+              ,{message_id,MessageId}
+              ,{timestamp,TimeStamp}],
       Consumer ! {deliver,RoutingKey,Headers,Payload},
       consumer_loop(ConsumerState);
     {#'basic.deliver'{consumer_tag=OtherTag},_Msg} ->
@@ -253,12 +257,20 @@ init([Config,Exchange,Queue,Type,RK,ConsumerTag]) ->
   process_flag(trap_exit,true),
   {ok,Connection}=amqp_connection:start(amqp_params(amqp_args(Config))),
   {ok,Channel}=amqp_connection:open_channel(Connection),
-  #'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{arguments=[{"main-exchange",longstr,Exchange}],exchange=binary(Exchange),type=binary(Type),durable=true}),
+  #'exchange.declare_ok'{}=amqp_channel:call(Channel
+                                            ,#'exchange.declare'{arguments=[{"main-exchange",longstr,Exchange}]
+                                                                ,exchange=binary(Exchange)
+                                                                ,type=binary(Type)
+                                                                ,durable=true}),
   Uniq=base64:encode(erlang:md5(term_to_binary(make_ref()))),
   FQueue= <<"client.fanout.",Uniq/binary>>,
   ?DBG("FQueue:~p",[FQueue]),
-  FQueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"},{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}],queue=binary(FQueue),exclusive=false,auto_delete=false,durable=true},
-  QueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"},{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}],queue=binary(Queue),exclusive=false,auto_delete=false,durable=true},
+  FQueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"}
+                                           ,{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}
+                                           ],queue=binary(FQueue),exclusive=false,auto_delete=false,durable=true},
+  QueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"}
+                                          ,{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}
+                                          ],queue=binary(Queue),exclusive=false,auto_delete=false,durable=true},
   #'queue.declare_ok'{queue=FQueue}=amqp_channel:call(Channel,FQueueDeclare),
   #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
   #'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=FQueue,exchange=binary(Exchange),routing_key=binary(RK)}),
@@ -460,7 +472,11 @@ declare_exchanges(Exchanges,Queue,RK)
   amqp_channel:register_return_handler(Channel,self()),
   amqp_channel:register_confirm_handler(Channel,self()),
   amqp_channel:call(Channel,#'confirm.select'{nowait=true}),
-  [#'exchange.declare_ok'{}=amqp_channel:call(Channel,#'exchange.declare'{arguments=[{"main-exchange",longstr,Name}],exchange=Name,type=Type,durable=Durable}) || {Name,Type,Durable} <- Exchanges],
+  [#'exchange.declare_ok'{}=amqp_channel:call(Channel
+                                             ,#'exchange.declare'{arguments=[{"main-exchange",longstr,Name}]
+                                                                 ,exchange=Name
+                                                                 ,type=Type
+                                                                 ,durable=Durable}) || {Name,Type,Durable} <- Exchanges],
   ok = declare_queue(Channel,Exchanges,Queue,RK),
   amqp_channel:close(Channel),
   amqp_connection:close(Connection),
@@ -472,9 +488,12 @@ declare_queue(Channel,Exchanges,Queue,RK)
        is_list(Exchanges),
        is_binary(Queue),
        is_binary(RK) ->
-  QueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"},{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}],queue=Queue,exclusive=false,auto_delete=false,durable=true},
+  QueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"}
+                                          ,{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}
+                                          ],queue=Queue,exclusive=false,auto_delete=false,durable=true},
   #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
-  [#'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
+  [#'queue.bind_ok'{}=amqp_channel:call(Channel
+                                       ,#'queue.bind'{queue=Queue,exchange=element(1,E),routing_key=RK}) || E <- Exchanges],
   ok.
 
 -spec declare_publish(string(),binary(),string()) -> ok.
