@@ -7,6 +7,7 @@
         ,amqp_params/1
         ,binary/1
         ,code_change/3
+        ,config/0
         ,fetch/0
         ,handle_call/3
         ,handle_cast/2
@@ -42,6 +43,43 @@ ref_to_string() ->
   Idx=make_ref(),
   ListIdx=ref_to_list(Idx),
   list_to_bitstring(ListIdx).
+
+-spec config() -> #amqp_params_network{connection_timeout :: non_neg_integer()
+                                      ,heartbeat :: non_neg_integer()
+                                      ,host :: string()
+                                      ,password :: string()
+                                      ,port :: non_neg_integer()
+                                      ,ssl_options :: atom()
+                                      ,username :: string()
+                                      ,virtual_host :: string()
+                                      }.
+config() ->
+  {ok,RabbitConnectionTimeout}=application:get_env(server,rabbit_connection_timeout),
+  {ok,RabbitHeartbeat}=application:get_env(server,rabbit_heartbeat),
+  {ok,RabbitHost}=application:get_env(server,rabbit_host),
+  {ok,RabbitPassword}=application:get_env(server,rabbit_password),
+  {ok,RabbitPort}=application:get_env(server,rabbit_port),
+  {ok,RabbitSSLOptions}=application:get_env(server,rabbit_ssl_options),
+  {ok,RabbitUsername}=application:get_env(server,rabbit_password),
+  {ok,RabbitVirtualHost}=application:get_env(server,rabbit_virtual_host),
+  Config=[{connection_timeout,RabbitConnectionTimeout}
+         ,{heartbeat,RabbitHeartbeat}
+         ,{host,RabbitHost}
+         ,{password,RabbitPassword}
+         ,{port,RabbitPort}
+         ,{ssl_options,RabbitSSLOptions}
+         ,{username,RabbitUsername}
+         ,{virtual_host,RabbitVirtualHost}
+         ],
+  #amqp_params_network{connection_timeout=proplists:get_value(connection_timeout,Config)
+                      ,heartbeat=proplists:get_value(heartbeat,Config)
+                      ,host=proplists:get_value(host,Config)
+                      ,password=proplists:get_value(password,Config)
+                      ,port=proplists:get_value(port,Config)
+                      ,ssl_options=proplists:get_value(ssl_options,Config)
+                      ,username=proplists:get_value(username,Config)
+                      ,virtual_host=proplists:get_value(virtual_host,Config)
+                      }.
 
 -spec amqp_args(list()) -> #amqp_params_network{
                           connection_timeout :: non_neg_integer(),
