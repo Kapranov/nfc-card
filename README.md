@@ -87,6 +87,8 @@ NFC картка не є пропуском, а використовується
 скільки разів запізнювався (без причини/по причині), скільки разів йшов раніше (без
 причини/по причині)
 
+### Usage RabbitMQ
+
 ```
 bash> sudo rabbitmqctl status
 bash> sudo rabbitmq-diagnostics status
@@ -124,15 +126,6 @@ erl> maui:publish(<<"Wahiawa sex offender to receive sentence in federal child p
 erl> maui:publish(<<"Maui County Council member Tasha Kama dies at 73">>).
 erl> maui:publish(<<"Kokua Line: Where can federal workers get relief?">>).
 erl> maui:publish(<<"Honolulu police shut down 3 Kalihi gamerooms, seize $24K in cash">>).
-```
-
-```
-bash> make run
-
-erl> Msg=#{age=>99,city=>"Honolulu",name=>"Kaplanov"}.
-erl> maui_server:publish(Msg).
-erl> maui_client:start_link(<<"test_aloha1">>,<<"test_bisque1">>).
-erl> maui_client:fetch().
 ```
 
 ```
@@ -176,6 +169,70 @@ erl> F(type).
 erl> F(unknown_key).
 erl> F(username).
 erl> F({test_payload2).
+```
+
+### For example usage MauiServer commands:
+
+```
+bash> make test
+bash> make run
+bash> rabbitmqadmin get queue='test_aloha1' count=2
+bash> rabbitmqadmin get queue='client.fanout.bPB17Qs1+1oxZCYPzzk2Rg==' count=2
+```
+
+```
+erl> Exchange = <<"test_lahaina1">>.
+erl> Queue = <<"test_aloha1">>.
+erl> Type = <<"fanout">>.
+erl> RoutingKey = <<"test_mahalo1">>.
+erl> ConsumerTag = <<"test_bisque1">>.
+erl> Args = [{connection_timeout,7000},{heartbeat,80},{host,"127.0.0.1"},{password,<<"guest">>},{port,5672},{ssl_options,none},{ssl_options,none},{username,<<"guest">>},{virtual_host,<<"/">>}].
+erl> Conf = maui_server:amqp_config().
+erl> Mssg = #{age=>99,city=>"Honolulu",name=>"Kaplanov"}.
+erl> {ok,DeliveryTag} = application:get_env(server,rabbit_persistent_delivery).
+erl> {ok,Connection} = amqp_connection:start(maui_server:amqp_params(maui_server:amqp_args(Args))).
+erl> {ok,Channel} = amqp_connection:open_channel(Connection).
+erl> maui_server:ack_message(Channel,DeliveryTag).
+erl> maui_server:amqp_params(Conf).
+erl> maui_server:amqp_params(maui_server:amqp_args(Args)).
+erl> maui_server:basic_cancel(Channel,ConsumerTag).
+erl> consumer_init(Channel,Queue,ConsumerTag).
+erl> maui_server:consumer_start(Channel,Queue,self()).
+erl> maui_server:generate_msg_id().
+erl> maui_server:off().
+erl> maui_server:exchange(Channel,Exchange,Type).
+erl> maui_server:queue(Queue).
+erl> maui_server:bind(Channel,Exchange,Queue,RoutingKey).
+erl> maui_server:unbind(Channel,Exchange,Queue,RoutingKey).
+erl> maui_server:delete_exchange(Channel,exchange,Exchange).
+erl> maui_server:delete_queue(Channel,queue,Queue).
+erl> maui_server:publish(Mssg).
+erl> maui_server:start().
+erl> maui_server:start_link(Args,Exchange,Queue,Type,RoutingKey,ConsumerTag).
+erl> maui_server:stop().
+erl> maui_server:time_since_epoch().
+```
+
+### For example usage MauiClient commands:
+
+```
+erl> Queue = <<"test_aloha1">>.
+erl> ConsumerTag = <<"test_bisque1">>.
+erl> Args = [{connection_timeout,7000},{heartbeat,80},{host,"127.0.0.1"},{password,<<"guest">>},{port,5672},{ssl_options,none},{ssl_options,none},{username,<<"guest">>},{virtual_host,<<"/">>}].
+erl> Conf = maui_client:amqp_config().
+erl> maui_client:amqp_args(Args).
+erl> maui_client:amqp_params(Conf).
+erl> maui_client:amqp_params(maui_client:amqp_args(Args)).
+erl> maui_client:binary(none).
+erl> maui_client:binary(<<"Aloha!">>).
+erl> maui_client:binary([<<"Aloha!">>]).
+erl> maui_client:off().
+erl> maui_client:ref_to_string().
+erl> maui_client:start().
+erl> maui_client:fetch().
+erl> maui_client:start_link(Args,Queue,ConsumerTag).
+erl> maui_client:stop().
+erl> maui_client:uuid().
 ```
 
 ### 30 Sep 2025 by Oleg G.Kapranov

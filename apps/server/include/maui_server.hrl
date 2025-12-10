@@ -49,11 +49,13 @@
 -define(SERVER,?MODULE).
 -record(maui_server,{channel :: pid()
                     ,connection :: pid()
+                    ,consumer_count :: non_neg_integer()
                     ,consumer_tag :: string()
                     ,content_type :: binary()
                     ,delivery_tag :: non_neg_integer()
                     ,exchange :: string()
                     ,headers :: list()
+                    ,message_count :: non_neg_integer()
                     ,message_id :: string()
                     ,priority :: non_neg_integer()
                     ,queue :: string()

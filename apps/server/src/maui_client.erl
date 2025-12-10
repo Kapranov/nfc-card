@@ -4,10 +4,10 @@
 -behaviour(gen_server).
 
 -export([amqp_args/1
+        ,amqp_config/0
         ,amqp_params/1
         ,binary/1
         ,code_change/3
-        ,config/0
         ,fetch/0
         ,handle_call/3
         ,handle_cast/2
@@ -44,7 +44,7 @@ ref_to_string() ->
   ListIdx=ref_to_list(Idx),
   list_to_bitstring(ListIdx).
 
--spec config() -> #amqp_params_network{connection_timeout :: non_neg_integer()
+-spec amqp_config() -> #amqp_params_network{connection_timeout :: non_neg_integer()
                                       ,heartbeat :: non_neg_integer()
                                       ,host :: string()
                                       ,password :: string()
@@ -53,7 +53,7 @@ ref_to_string() ->
                                       ,username :: string()
                                       ,virtual_host :: string()
                                       }.
-config() ->
+amqp_config() ->
   {ok,RabbitConnectionTimeout}=application:get_env(server,rabbit_connection_timeout),
   {ok,RabbitHeartbeat}=application:get_env(server,rabbit_heartbeat),
   {ok,RabbitHost}=application:get_env(server,rabbit_host),
