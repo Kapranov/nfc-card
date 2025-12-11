@@ -196,8 +196,9 @@ erl> maui_server:ack_message(Channel,DeliveryTag).
 erl> maui_server:amqp_params(Conf).
 erl> maui_server:amqp_params(maui_server:amqp_args(Args)).
 erl> maui_server:basic_cancel(Channel,ConsumerTag).
-erl> consumer_init(Channel,Queue,ConsumerTag).
+erl> maui_server:consume(Channel,Queue).
 erl> maui_server:consumer_start(Channel,Queue,self()).
+erl> maui_server:consumer_init(Channel,Queue,ConsumerTag).
 erl> maui_server:generate_msg_id().
 erl> maui_server:off().
 erl> maui_server:exchange(Channel,Exchange,Type).
