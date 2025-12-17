@@ -256,21 +256,24 @@ consumer_loop(#consumer_state{channel=Channel
                              }=ConsumerState) ->
   receive
     {#'basic.deliver'{consumer_tag=ConsumerTag
-                     ,delivery_tag=_DeliveryTag
+                     ,delivery_tag=DeliveryTag
                      ,exchange=_Exchange
                      ,redelivered=_Redelivered
                      ,routing_key=RoutingKey
-                     },#'amqp_msg'{props=Properties,payload=Payload}} ->
-      io:format("#1 COMMAN Deliver:~s~n",[Payload]),
+                     },#'amqp_msg'{props=Props,payload=Payload}} ->
+      io:format("#1 COMMAN Deliver: ~p - ~s ~n", [DeliveryTag,Payload]),
       #'P_basic'{content_type=ContentType
+                ,content_encoding=ContentEncoding
+                ,correlation_id=CorrelationId
                 ,delivery_mode=_DeliveryMode
                 ,headers=_Headers
                 ,message_id=MessageId
                 ,priority=_Priority
                 ,timestamp=TimeStamp
-                }=Properties,
+                }=Props,
       Headers=[{content_type,ContentType}
-              ,{content_encoding,<<"UTF-8">>}
+              ,{content_encoding,ContentEncoding}
+              ,{correlation_id,CorrelationId}
               ,{message_id,MessageId}
               ,{timestamp,TimeStamp}],
       Consumer ! {deliver,RoutingKey,Headers,Payload},
@@ -315,7 +318,7 @@ unbind(Channel,Exchange,Queue,RK) ->
 
 -spec ack_message(pid(),non_neg_integer()) -> ok.
 ack_message(Channel,DeliveryTag) ->
-  Method=#'basic.ack'{delivery_tag=DeliveryTag},
+  Method=#'basic.ack'{delivery_tag=DeliveryTag,multiple=false},
   amqp_channel:call(Channel,Method).
 
 basic_cancel(Channel,ConsumerTag) ->
@@ -374,7 +377,7 @@ init([Config,Exchange,Queue,Type,RK,ConsumerTag]) ->
   #'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=binary(Exchange),routing_key=binary(RK)}),
   ?DBG("Uniq: ~p", [Uniq]),
   erlang:monitor(process, Channel),
-  io:format(" [*] Waiting for messages. To exit press CTRL+C~n"),
+  io:format(" [*] Waiting for messages. To_ exit press CTRL+C~n"),
   {ok,#maui_server{
          channel=Channel,
          connection=Connection,
@@ -456,6 +459,8 @@ handle_cast({publish,Msg},#maui_server{channel=Channel,exchange=Exchange,routing
   Headers=[{<<"company">>,binary,<<"StarTech">>}],
   BasicPublish=#'basic.publish'{exchange=Exchange,mandatory=true,routing_key=RK},
   Props=#'P_basic'{content_type=?RABBIT_CONTENT_TYPE
+                  ,content_encoding=?RABBIT_CONTENT_ENCODING
+                  ,correlation_id=?RABBIT_CORRELATION_ID
                   ,delivery_mode=?RABBIT_PERSISTENT_DELIVERY
                   ,headers=Headers
                   ,message_id=generate_msg_id()
@@ -477,12 +482,45 @@ handle_info(timeout,#maui_server{channel=Channel,exchange=Exchange,routing_key=R
   amqp_channel:register_confirm_handler(Channel,self()),
   Term=#{age=>generate_age(),city=>generate_city(),name=>generate_name()},
   Props=#'P_basic'{content_type=?RABBIT_CONTENT_TYPE
+                  ,content_encoding=?RABBIT_CONTENT_ENCODING
+                  ,correlation_id=?RABBIT_CORRELATION_ID
                   ,delivery_mode=?RABBIT_PERSISTENT_DELIVERY
                   ,headers=Headers
                   ,message_id=generate_msg_id()
                   ,priority=?RABBIT_PRIORITY
                   ,timestamp=time_since_epoch()
                   },
+
+%app_id
+%content_type
+%content_encoding
+%correlation_id
+%cluster_id
+%delivery_mode
+%expiration
+%headers
+%priority
+%message_id
+%timestamp
+%type
+%reply_to
+%user_id
+
+%content_type     :: binary()          % MIME content type
+%content_encoding :: binary()          % MIME content encoding
+%headers          :: list()            % message header field table
+%delivery_mode    :: non_neg_integer() % 1 or undefined -- non-persistent, 2 -- persistent
+%priority         :: non_neg_integer() % message priority 0..9
+%correlation_id   :: binary()          % application correlation identifier
+%reply_to         :: binary()          % address to reply to
+%expiration       :: binary()          % message expiration specification
+%message_id       :: binary()          % application message identifier
+%timestamp        :: non_neg_integer() % message timestamp
+%type             :: binary()          % message type name
+%user_id          :: binary()          % creating user id
+%app_id           :: binary()          % creating application id
+%cluster_id       :: binary()
+
   Msg=#'amqp_msg'{props=Props,payload=jsx:encode(Term)},
   BasicPublish=#'basic.publish'{exchange=Exchange,mandatory=true,routing_key=RK},
   ok=amqp_channel:cast(Channel,BasicPublish,Msg),

@@ -9,6 +9,8 @@
 -define(RABBIT_CONSUMER2,<<"test_bisque2">>).
 -define(RABBIT_CONSUMER3,<<"test_bisque3">>).
 -define(RABBIT_CONTENT_TYPE,<<"application/json">>).
+-define(RABBIT_CORRELATION_ID,<<"correlation_id">>).
+-define(RABBIT_CONTENT_ENCODING,<<"UTF-8">>).
 -define(RABBIT_EXCHANGE1,<<"test_lahaina1">>).
 -define(RABBIT_EXCHANGE2,<<"test_lahaina2">>).
 -define(RABBIT_EXCHANGE3,<<"test_lahaina3">>).
@@ -16,7 +18,7 @@
 -define(RABBIT_HOST,"127.0.0.1").
 -define(RABBIT_PASSWORD,<<"guest">>).
 -define(RABBIT_PAYLOAD_DATA,#{name => <<"Nakamura">>,age => 22,city => <<"Oahu">>}).
--define(RABBIT_PERSISTENT_DELIVERY,2).
+-define(RABBIT_PERSISTENT_DELIVERY,1).
 -define(RABBIT_PORT,5672).
 -define(RABBIT_PRIORITY,0).
 -define(RABBIT_QUEUE1,<<"test_aloha1">>).
@@ -47,21 +49,29 @@
 -define(RABBIT_UNROUTABLE,<<"unroutable">>).
 -define(RABBIT_USERNAME,<<"guest">>).
 -define(SERVER,?MODULE).
--record(maui_server,{channel :: pid()
+-record(maui_server,{app_id :: binary()
+                    ,channel :: pid()
+                    ,cluster_id :: binary()
                     ,connection :: pid()
                     ,consumer_count :: non_neg_integer()
-                    ,consumer_tag :: string()
+                    ,consumer_tag :: binary()
+                    ,content_encoding :: binary()
                     ,content_type :: binary()
-                    ,delivery_tag :: non_neg_integer()
-                    ,exchange :: string()
+                    ,correlation_id :: binary()
+                    ,delivery_mode :: non_neg_integer()
+                    ,exchange :: binary()
+                    ,expiration :: binary()
                     ,headers :: list()
                     ,message_count :: non_neg_integer()
-                    ,message_id :: string()
+                    ,message_id :: binary()
                     ,priority :: non_neg_integer()
-                    ,queue :: string()
-                    ,routing_key :: string()
+                    ,queue :: binary()
+                    ,reply_to :: binary()
+                    ,routing_key :: binary()
                     ,timestamp :: non_neg_integer()
+                    ,type :: binary()
                     ,uniq :: binary()
+                    ,user_id :: binary()
                     }).
 -record(consumer_state,{channel
                        ,channel_ref
