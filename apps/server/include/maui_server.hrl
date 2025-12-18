@@ -4,16 +4,18 @@
 -define(DEFAULT_TIMEOUT,100).
 -define(ERR(F, A), io:format("***ERR***: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
 -define(INFO(F, A), io:format("===INFO===: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
+-define(RABBIT_APP_ID,<<"maui_server">>).
 -define(RABBIT_CONNECTION_TIMEOUT,7_000).
 -define(RABBIT_CONSUMER1,<<"test_bisque1">>).
 -define(RABBIT_CONSUMER2,<<"test_bisque2">>).
 -define(RABBIT_CONSUMER3,<<"test_bisque3">>).
+-define(RABBIT_CONTENT_ENCODING,<<"UTF-8">>).
 -define(RABBIT_CONTENT_TYPE,<<"application/json">>).
 -define(RABBIT_CORRELATION_ID,<<"correlation_id">>).
--define(RABBIT_CONTENT_ENCODING,<<"UTF-8">>).
 -define(RABBIT_EXCHANGE1,<<"test_lahaina1">>).
 -define(RABBIT_EXCHANGE2,<<"test_lahaina2">>).
 -define(RABBIT_EXCHANGE3,<<"test_lahaina3">>).
+-define(RABBIT_EXPIRATION,<<"60000">>).
 -define(RABBIT_HEARFBEAT,80).
 -define(RABBIT_HOST,"127.0.0.1").
 -define(RABBIT_PASSWORD,<<"guest">>).

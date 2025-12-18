@@ -63,14 +63,14 @@ time_since_epoch() ->
 timeout_millseconds() -> 5_500.
 
 -spec amqp_config() -> #amqp_params_network{connection_timeout :: non_neg_integer()
-                                      ,heartbeat :: non_neg_integer()
-                                      ,host :: string()
-                                      ,password :: string()
-                                      ,port :: non_neg_integer()
-                                      ,ssl_options :: atom()
-                                      ,username :: string()
-                                      ,virtual_host :: string()
-                                      }.
+                                           ,heartbeat :: non_neg_integer()
+                                           ,host :: string()
+                                           ,password :: string()
+                                           ,port :: non_neg_integer()
+                                           ,ssl_options :: atom()
+                                           ,username :: string()
+                                           ,virtual_host :: string()
+                                           }.
 amqp_config() ->
   {ok,RabbitConnectionTimeout}=application:get_env(server,rabbit_connection_timeout),
   {ok,RabbitHeartbeat}=application:get_env(server,rabbit_heartbeat),
@@ -78,7 +78,7 @@ amqp_config() ->
   {ok,RabbitPassword}=application:get_env(server,rabbit_password),
   {ok,RabbitPort}=application:get_env(server,rabbit_port),
   {ok,RabbitSSLOptions}=application:get_env(server,rabbit_ssl_options),
-  {ok,RabbitUsername}=application:get_env(server,rabbit_password),
+  {ok,RabbitUsername}=application:get_env(server,rabbit_username),
   {ok,RabbitVirtualHost}=application:get_env(server,rabbit_virtual_host),
   Config=[{connection_timeout,RabbitConnectionTimeout}
          ,{heartbeat,RabbitHeartbeat}
@@ -99,16 +99,15 @@ amqp_config() ->
                       ,virtual_host=proplists:get_value(virtual_host,Config)
                       }.
 
--spec amqp_args(list()) -> #amqp_params_network{
-                          connection_timeout :: non_neg_integer(),
-                          heartbeat :: non_neg_integer(),
-                          host :: string(),
-                          password :: string(),
-                          port :: non_neg_integer(),
-                          ssl_options :: atom(),
-                          username :: string(),
-                          virtual_host :: string()
-                         }.
+-spec amqp_args(list()) -> #amqp_params_network{connection_timeout :: non_neg_integer()
+                                               ,heartbeat :: non_neg_integer()
+                                               ,host :: string()
+                                               ,password :: string()
+                                               ,port :: non_neg_integer()
+                                               ,ssl_options :: atom()
+                                               ,username :: string()
+                                               ,virtual_host :: string()
+                                               }.
 amqp_args(Config) ->
   #amqp_params_network{connection_timeout=proplists:get_value(connection_timeout,Config)
                       ,heartbeat=proplists:get_value(heartbeat,Config)
@@ -175,8 +174,8 @@ off() ->
 
 -spec exchange(pid(),string(),string()) -> ok.
 exchange(Channel,Name,Type) ->
-  Declare=#'exchange.declare'{auto_delete=false
-                             ,arguments = [{"main-exchange",longstr,Name}]
+  Declare=#'exchange.declare'{arguments = [{"main-exchange",longstr,Name}]
+                             ,auto_delete=false
                              ,durable=true
                              ,exchange=binary(Name)
                              ,internal=false
@@ -189,7 +188,7 @@ exchange(Channel,Name,Type) ->
 
 -spec delete_exchange(pid(),atom(),binary()) -> ok.
 delete_exchange(Channel,exchange,Exchange) ->
-  ExchangeDelete=#'exchange.delete'{exchange=binary(Exchange)},
+  ExchangeDelete=#'exchange.delete'{exchange=binary(Exchange),nowait=false},
   #'exchange.delete_ok'{}=amqp_channel:call(Channel,ExchangeDelete),
   ok.
 
@@ -198,7 +197,7 @@ queue(Name) ->
 
 -spec delete_queue(pid(),atom(),binary()) -> ok.
 delete_queue(Channel,queue,Queue) ->
-  QueueDelete=#'queue.delete'{queue=binary(Queue)},
+  QueueDelete=#'queue.delete'{queue=binary(Queue),nowait=false},
   #'queue.delete_ok'{message_count=MessageCount}=amqp_channel:call(Channel,QueueDelete),
   io:format("Message count: ~p~n",[MessageCount]),
   ok.
@@ -215,12 +214,13 @@ consumer_start(Channel,Queue,Consumer)
 
 consumer_init(Channel,Queue,Consumer) ->
   {ok,ConsumerName}=application:get_env(server,rabbit_consumer1),
-  BasicConsume=#'basic.consume'{queue=binary(Queue)
+  BasicConsume=#'basic.consume'{arguments=[]
                                ,consumer_tag =ConsumerName
-                               ,no_local=false
-                               ,no_ack=true
                                ,exclusive=false
+                               ,no_ack=true
+                               ,no_local=false
                                ,nowait=false
+                               ,queue=binary(Queue)
                                },
   case amqp_channel:subscribe(Channel,BasicConsume,self()) of
     #'basic.consume_ok'{consumer_tag=_Tag} ->
@@ -262,17 +262,23 @@ consumer_loop(#consumer_state{channel=Channel
                      ,routing_key=RoutingKey
                      },#'amqp_msg'{props=Props,payload=Payload}} ->
       io:format("#1 COMMAN Deliver: ~p - ~s ~n", [DeliveryTag,Payload]),
-      #'P_basic'{content_type=ContentType
+      #'P_basic'{app_id=_AppId
+                ,cluster_id=_ClusterId
                 ,content_encoding=ContentEncoding
+                ,content_type=ContentType
                 ,correlation_id=CorrelationId
                 ,delivery_mode=_DeliveryMode
+                ,expiration=_Expiration
                 ,headers=_Headers
                 ,message_id=MessageId
                 ,priority=_Priority
+                ,reply_to=_ReplyTo
                 ,timestamp=TimeStamp
+                ,type=_Type
+                ,user_id=_UserId
                 }=Props,
-      Headers=[{content_type,ContentType}
-              ,{content_encoding,ContentEncoding}
+      Headers=[{content_encoding,ContentEncoding}
+              ,{content_type,ContentType}
               ,{correlation_id,CorrelationId}
               ,{message_id,MessageId}
               ,{timestamp,TimeStamp}],
@@ -297,21 +303,21 @@ consumer_loop(#consumer_state{channel=Channel
 
 -spec bind(pid(),string(),string(),string()) -> ok.
 bind(Channel,Exchange,Queue,RK) ->
-  QueueBind=#'queue.bind'{queue=binary(Queue)
+  QueueBind=#'queue.bind'{arguments=[]
                          ,exchange=binary(Exchange)
-                         ,routing_key=binary(RK)
                          ,nowait=false
-                         ,arguments=[]
+                         ,queue=binary(Queue)
+                         ,routing_key=binary(RK)
                          },
   #'queue.bind_ok'{}=amqp_channel:call(Channel,QueueBind),
   ok.
 
 -spec unbind(pid(),string(),string(),string()) -> ok.
 unbind(Channel,Exchange,Queue,RK) ->
-  QueueUnbind=#'queue.unbind'{queue=binary(Queue)
+  QueueUnbind=#'queue.unbind'{arguments=[]
                              ,exchange=binary(Exchange)
+                             ,queue=binary(Queue)
                              ,routing_key=RK
-                             ,arguments=[]
                              },
   #'queue.unbind_ok'{}=amqp_channel:call(Channel,QueueUnbind),
   ok.
@@ -322,7 +328,7 @@ ack_message(Channel,DeliveryTag) ->
   amqp_channel:call(Channel,Method).
 
 basic_cancel(Channel,ConsumerTag) ->
-  BasicCancel=#'basic.cancel'{nowait=false,consumer_tag=ConsumerTag},
+  BasicCancel=#'basic.cancel'{consumer_tag=ConsumerTag,nowait=false},
   #'basic.cancel_ok'{consumer_tag=ConsumerTag}=amqp_channel:call(Channel,BasicCancel),
   ok.
 
@@ -359,22 +365,28 @@ init([Config,Exchange,Queue,Type,RK,ConsumerTag]) ->
   {ok,Channel}=amqp_connection:open_channel(Connection),
   #'exchange.declare_ok'{}=amqp_channel:call(Channel
                                             ,#'exchange.declare'{arguments=[{"main-exchange",longstr,Exchange}]
+                                                                ,auto_delete=false
+                                                                ,durable=true
                                                                 ,exchange=binary(Exchange)
+                                                                ,internal=false
+                                                                ,nowait=false
+                                                                ,passive=false
                                                                 ,type=binary(Type)
-                                                                ,durable=true}),
+                                                                }),
+
   Uniq=base64:encode(erlang:md5(term_to_binary(make_ref()))),
   FQueue= <<"client.fanout.",Uniq/binary>>,
   ?DBG("FQueue:~p",[FQueue]),
   FQueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"}
                                            ,{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}
-                                           ],queue=binary(FQueue),exclusive=false,auto_delete=false,durable=true},
+                                           ],queue=binary(FQueue),exclusive=false,auto_delete=false,durable=true,nowait=false,passive=false},
   QueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"}
                                           ,{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}
-                                          ],queue=binary(Queue),exclusive=false,auto_delete=false,durable=true},
+                                          ],queue=binary(Queue),exclusive=false,auto_delete=false,durable=true,nowait=false,passive=false},
   #'queue.declare_ok'{queue=FQueue,message_count=MessageCount,consumer_count=ConsumerCount}=amqp_channel:call(Channel,FQueueDeclare),
   #'queue.declare_ok'{queue=Queue,message_count=MessageCount,consumer_count=ConsumerCount}=amqp_channel:call(Channel,QueueDeclare),
-  #'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=FQueue,exchange=binary(Exchange),routing_key=binary(RK)}),
-  #'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=binary(Exchange),routing_key=binary(RK)}),
+  #'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{arguments=[],queue=FQueue,exchange=binary(Exchange),routing_key=binary(RK),nowait=false}),
+  #'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{arguments=[],queue=Queue,exchange=binary(Exchange),routing_key=binary(RK),nowait=false}),
   ?DBG("Uniq: ~p", [Uniq]),
   erlang:monitor(process, Channel),
   io:format(" [*] Waiting for messages. To_ exit press CTRL+C~n"),
@@ -397,8 +409,8 @@ init([Config,Exchange,Queue,Type,RK,ConsumerTag]) ->
                                           {stop,atom(),atom(),map()} |
                                           {stop,atom(),map()}.
 handle_call({exchange,Name,Type},_From,#maui_server{channel=Channel}=State) ->
-  Declare=#'exchange.declare'{auto_delete=false
-                             ,arguments = [{"main-exchange",longstr,Name}]
+  Declare=#'exchange.declare'{arguments = [{"main-exchange",longstr,Name}]
+                             ,auto_delete=false
                              ,durable=true
                              ,exchange=binary(Name)
                              ,internal=false
@@ -409,41 +421,41 @@ handle_call({exchange,Name,Type},_From,#maui_server{channel=Channel}=State) ->
   #'exchange.declare_ok'{}=amqp_channel:call(Channel,Declare),
   {reply,ok,State,timeout_millseconds()};
 handle_call({delete_exchange,Name},_From,#maui_server{channel=Channel}=State) ->
-  ExchangeDelete=#'exchange.delete'{exchange=binary(Name)},
+  ExchangeDelete=#'exchange.delete'{exchange=binary(Name),nowait=false},
   #'exchange.delete_ok'{}=amqp_channel:call(Channel,ExchangeDelete),
   {reply,ok,State,timeout_millseconds()};
 handle_call({queue,Name},_From,#maui_server{channel=Channel,exchange=Exchange,routing_key=RK}=State) ->
-  QueueDeclare=#'queue.declare'{queue=binary(Name),exclusive=false,auto_delete=false,durable=true},
-  #'queue.declare_ok'{queue=Queue}=amqp_channel:call(Channel,QueueDeclare),
-  #'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{queue=Queue,exchange=Exchange,routing_key=RK}),
+  QueueDeclare=#'queue.declare'{arguments=[],auto_delete=false,durable=true,exclusive=false,nowait=false,passive=false,queue=binary(Name)},
+  #'queue.declare_ok'{queue=Queue,message_count=_MessageCount,consumer_count=_ConsumerCount}=amqp_channel:call(Channel,QueueDeclare),
+  #'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{arguments=[],exchange=Exchange,nowait=false,queue=Queue,routing_key=RK}),
   {reply,ok,State,timeout_millseconds()};
 handle_call({delete_queue,Name},_From,#maui_server{channel=Channel}) ->
-  QueueDelete=#'queue.delete'{queue=binary(Name)},
+  QueueDelete=#'queue.delete'{queue=binary(Name),nowait=false},
   #'queue.delete_ok'{message_count=MessageCount}=amqp_channel:call(Channel,QueueDelete),
   {reply,ok,#maui_server{channel=Channel,message_count=MessageCount-1},timeout_millseconds()};
 handle_call({bind,Exchange,Queue,RK},_From,#maui_server{channel=Channel}=State) ->
-  QueueBind=#'queue.bind'{queue=binary(Queue)
+  QueueBind=#'queue.bind'{arguments=[]
                          ,exchange=binary(Exchange)
-                         ,routing_key=binary(RK)
                          ,nowait=false
-                         ,arguments=[]
+                         ,queue=binary(Queue)
+                         ,routing_key=binary(RK)
                          },
   #'queue.bind_ok'{}=amqp_channel:call(Channel,QueueBind),
   {reply,ok,State,timeout_millseconds()};
 handle_call({unbind,Exchange,Queue,RK},_From,#maui_server{channel=Channel}=State) ->
-  QueueUnbind=#'queue.unbind'{queue=binary(Queue)
+  QueueUnbind=#'queue.unbind'{arguments=[]
                              ,exchange=binary(Exchange)
+                             ,queue=binary(Queue)
                              ,routing_key=RK
-                             ,arguments=[]
                              },
   #'queue.unbind_ok'{}=amqp_channel:call(Channel,QueueUnbind),
   {reply,ok,State,timeout_millseconds()};
 handle_call({ack_message,DeliveryTag},_From,#maui_server{channel=Channel}=State) ->
-  Method=#'basic.ack'{delivery_tag=DeliveryTag},
+  Method=#'basic.ack'{delivery_tag=DeliveryTag,multiple=false},
   amqp_channel:call(Channel,Method),
   {reply,ok,State,timeout_millseconds()};
 handle_call(basic_cancel,_From,#maui_server{channel=Channel,consumer_tag=ConsumerTag}=State) ->
-  BasicCancel=#'basic.cancel'{nowait=false,consumer_tag=ConsumerTag},
+  BasicCancel=#'basic.cancel'{consumer_tag=ConsumerTag,nowait=false},
   #'basic.cancel_ok'{consumer_tag=ConsumerTag}=amqp_channel:call(Channel,BasicCancel),
   {reply,ok,State,timeout_millseconds()};
 handle_call(stop,_From,State) -> {stop,normal,ok,State};
@@ -455,17 +467,25 @@ handle_call(_Request,_From,State) -> {reply,ok,State}.
 handle_cast(consumer,#maui_server{channel=Channel,queue=Queue,message_count=_MessageCount,consumer_count=_ConsumerCount}=State) ->
   consumer_start(Channel,Queue,self()),
   {noreply,State,timeout_millseconds()};
-handle_cast({publish,Msg},#maui_server{channel=Channel,exchange=Exchange,routing_key=RK,message_count=_MessageCount,consumer_count=_ConsumerCount}=State) ->
+handle_cast({publish,Msg},#maui_server{channel=Channel,exchange=Exchange,queue=Queue,routing_key=RK,message_count=_MessageCount,consumer_count=_ConsumerCount}=State) ->
+  {ok,RabbitUsername}=application:get_env(server,rabbit_username),
+  {ok,RabbitType}=application:get_env(server,rabbit_type),
   Headers=[{<<"company">>,binary,<<"StarTech">>}],
   BasicPublish=#'basic.publish'{exchange=Exchange,mandatory=true,routing_key=RK},
-  Props=#'P_basic'{content_type=?RABBIT_CONTENT_TYPE
+  Props=#'P_basic'{app_id=?RABBIT_APP_ID
+                  ,cluster_id=?RABBIT_APP_ID
                   ,content_encoding=?RABBIT_CONTENT_ENCODING
+                  ,content_type=?RABBIT_CONTENT_TYPE
                   ,correlation_id=?RABBIT_CORRELATION_ID
                   ,delivery_mode=?RABBIT_PERSISTENT_DELIVERY
+                  ,expiration=?RABBIT_EXPIRATION
                   ,headers=Headers
                   ,message_id=generate_msg_id()
                   ,priority=?RABBIT_PRIORITY
+                  ,reply_to=Queue
                   ,timestamp=time_since_epoch()
+                  ,type=RabbitType
+                  ,user_id=RabbitUsername
                   },
   ok=amqp_channel:cast(Channel,BasicPublish,#'amqp_msg'{props=Props,payload=binary(Msg)}),
   Message = "Published\nPayload: ~p~n",
@@ -476,53 +496,30 @@ handle_cast(_Msg,State) -> {noreply,State}.
 -spec handle_info(atom(),map()) -> no_return() |
                                    {noreply,map(),non_neg_integer()} |
                                    {stop,atom(),map()}.
-handle_info(timeout,#maui_server{channel=Channel,exchange=Exchange,routing_key=RK,message_count=_MessageCount,consumer_count=_ConsumerCount}=State) ->
+handle_info(timeout,#maui_server{channel=Channel,exchange=Exchange,queue=Queue,routing_key=RK,message_count=_MessageCount,consumer_count=_ConsumerCount}=State) ->
+  {ok,RabbitUsername}=application:get_env(server,rabbit_username),
+  {ok,RabbitType}=application:get_env(server,rabbit_type),
   Headers=[{<<"company">>,binary,<<"StarTech">>}],
   amqp_channel:register_return_handler(Channel,self()),
   amqp_channel:register_confirm_handler(Channel,self()),
   Term=#{age=>generate_age(),city=>generate_city(),name=>generate_name()},
-  Props=#'P_basic'{content_type=?RABBIT_CONTENT_TYPE
+  Props=#'P_basic'{app_id=?RABBIT_APP_ID
+                  ,cluster_id=?RABBIT_APP_ID
                   ,content_encoding=?RABBIT_CONTENT_ENCODING
+                  ,content_type=?RABBIT_CONTENT_TYPE
                   ,correlation_id=?RABBIT_CORRELATION_ID
                   ,delivery_mode=?RABBIT_PERSISTENT_DELIVERY
+                  ,expiration=?RABBIT_EXPIRATION
                   ,headers=Headers
                   ,message_id=generate_msg_id()
                   ,priority=?RABBIT_PRIORITY
+                  ,reply_to=Queue
                   ,timestamp=time_since_epoch()
+                  ,type=RabbitType
+                  ,user_id=RabbitUsername
                   },
-
-%app_id
-%content_type
-%content_encoding
-%correlation_id
-%cluster_id
-%delivery_mode
-%expiration
-%headers
-%priority
-%message_id
-%timestamp
-%type
-%reply_to
-%user_id
-
-%content_type     :: binary()          % MIME content type
-%content_encoding :: binary()          % MIME content encoding
-%headers          :: list()            % message header field table
-%delivery_mode    :: non_neg_integer() % 1 or undefined -- non-persistent, 2 -- persistent
-%priority         :: non_neg_integer() % message priority 0..9
-%correlation_id   :: binary()          % application correlation identifier
-%reply_to         :: binary()          % address to reply to
-%expiration       :: binary()          % message expiration specification
-%message_id       :: binary()          % application message identifier
-%timestamp        :: non_neg_integer() % message timestamp
-%type             :: binary()          % message type name
-%user_id          :: binary()          % creating user id
-%app_id           :: binary()          % creating application id
-%cluster_id       :: binary()
-
   Msg=#'amqp_msg'{props=Props,payload=jsx:encode(Term)},
-  BasicPublish=#'basic.publish'{exchange=Exchange,mandatory=true,routing_key=RK},
+  BasicPublish=#'basic.publish'{exchange=Exchange,immediate=false,mandatory=true,routing_key=RK},
   ok=amqp_channel:cast(Channel,BasicPublish,Msg),
   io:format("~s~n",[jsx:encode(Term)]),
   {noreply,State,timeout_millseconds()};
@@ -530,7 +527,7 @@ handle_info({deliver,RK,Header,Payload},#maui_server{routing_key=RK}=State) ->
    io:format("demo  header: ~p~n",[Header]),
    io:format("demo payload: ~p~n", [jsx:decode(Payload)]),
   {noreply,State,timeout_millseconds()};
-handle_info({#'basic.return'{reply_text=?RABBIT_UNROUTABLE,exchange=Exchange},Payload},State) ->
+handle_info({#'basic.return'{exchange=Exchange,reply_code=_ReplyCode,reply_text=?RABBIT_UNROUTABLE,routing_key=_RK},Payload},State) ->
   error_logger:error_msg("unroutable (~p): ~p",[?MODULE,Exchange]),
   {stop,{unroutable,Exchange,Payload},State};
 handle_info(Info,State) ->
