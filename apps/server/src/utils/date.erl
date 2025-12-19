@@ -1,4 +1,4 @@
--module(date_utils).
+-module(date).
 -export([add/2,
          date_to_epoch/1,
          datetime_to_epoch/1,
