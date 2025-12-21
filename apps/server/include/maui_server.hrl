@@ -1,9 +1,10 @@
 -ifndef(MAUI_SERVER_HRL).
--define(MAUI_SERVER_HRL, true).
--define(DBG(F, A), io:format("DBG: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
+-define(DBG(F,A),io:format("DBG: ~w:~b: " ++ F ++ "~n",[?MODULE, ?LINE] ++ A)).
 -define(DEFAULT_TIMEOUT,100).
--define(ERR(F, A), io:format("***ERR***: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
--define(INFO(F, A), io:format("===INFO===: ~w:~b: " ++ F ++ "~n", [?MODULE, ?LINE] ++ A)).
+-define(DELAY,100).
+-define(ERR(F,A),io:format("***ERR***: ~w:~b: " ++ F ++ "~n",[?MODULE, ?LINE] ++ A)).
+-define(INFO(F,A),io:format("===INFO===: ~w:~b: " ++ F ++ "~n",[?MODULE, ?LINE] ++ A)).
+-define(MAUI_SERVER_HRL,true).
 -define(RABBIT_APP_ID,<<"maui_server">>).
 -define(RABBIT_CONNECTION_TIMEOUT,7_000).
 -define(RABBIT_CONSUMER1,<<"test_bisque1">>).

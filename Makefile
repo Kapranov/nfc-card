@@ -11,6 +11,22 @@ all:
 clean:
 		@$(REBAR) clean
 
+clean-all:
+		@rm -rf _build
+		@rm rebar.lock
+
+compile:
+		@$(REBAR) compile
+
+console:
+		@erl -pa _build/default/lib/*/ebin -s maui_server test_run
+
+dialyzer:
+		@$(REBAR) dialyzer
+
+eunit:
+		@$(REBAR) eunit
+
 get-deps:
 		@$(REBAR) get-deps
 

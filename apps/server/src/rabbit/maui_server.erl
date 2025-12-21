@@ -25,6 +25,7 @@
         ,off/0
         ,publish/1
         ,queue/1
+        ,retrieve/2
         ,start/0
         ,start_link/6
         ,stop/0
@@ -338,6 +339,23 @@ basic_cancel(Channel,ConsumerTag) ->
 publish(Msg) when is_map(Msg) ->
   gen_server:cast(?SERVER,{publish,jsx:encode(Msg)}).
 
+-spec retrieve(pid(),string()) -> ok.
+retrieve(Channel,Queue) ->
+  GetMethod=#'basic.get'{queue=Queue,no_ack=false},
+  Result=amqp_channel:call(Channel,GetMethod),
+  case Result of
+  {#'basic.get_ok'{delivery_tag=DeliveryTag,redelivered=_Redelivered,exchange=_Exchange,routing_key=_RK,message_count=_MessageCount},Content} ->
+    io:format("Received message [~p]:~p~n", [DeliveryTag,Content#amqp_msg.payload]),
+    amqp_channel:cast(Channel,#'basic.ack'{delivery_tag=DeliveryTag}),
+    ok;
+  {#'basic.get_empty'{},no_content} ->
+    io:format("Queue is empty, no message received.~n"),
+    ok;
+  {error,Reason} ->
+    io:format("Error during basic.get:~p~n",[Reason]),
+    ok
+  end.
+
 -spec start_link(
         Config::list(),
         Exchange::string(),
@@ -521,6 +539,7 @@ handle_info(timeout,#maui_server{channel=Channel,exchange=Exchange,queue=Queue,r
   Msg=#'amqp_msg'{props=Props,payload=jsx:encode(Term)},
   BasicPublish=#'basic.publish'{exchange=Exchange,immediate=false,mandatory=true,routing_key=RK},
   ok=amqp_channel:cast(Channel,BasicPublish,Msg),
+  timer:sleep(?DELAY),
   io:format("~s~n",[jsx:encode(Term)]),
   {noreply,State,timeout_millseconds()};
 handle_info({deliver,RK,Header,Payload},#maui_server{routing_key=RK}=State) ->
