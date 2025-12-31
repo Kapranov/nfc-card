@@ -236,6 +236,110 @@ erl> maui_client:stop().
 erl> maui_client:uuid().
 ```
 
+```
+    %amqp_channel:cast(State#state.channel, #'basic.publish'{exchange = ?EVENTS_EXCHANGE}, #amqp_msg{props = #'P_basic'{}, payload = Message}),
+    %after 4000 -> io:format("~n"), io:format("Message timeout exceeded ~n")
+    %Any -> io:format("received unexpected Any: ~p~n",[Any]), ttt(Channel)
+    %Now = date_utils:now_to_milliseconds_hires(erlang:now()),
+    %#amqp_msg{props = Props, payload = term_to_binary(Payload)}),
+```
+
+### Erlang and Kafka
+
+Example of a configuration file (for `sys.config`):
+
+```erlang
+{erlkaf, [
+
+    {global_client_options, [
+        {bootstrap_servers, <<"broker1.com:9092,broker2.com:9092">>},
+    ]},
+
+    {clients, [
+        {client_producer_id, [
+
+            {type, producer},
+
+            {topics, [
+                {<<"benchmark">>, [{request_required_acks, 1}]}
+            ]},
+
+            {client_options, [
+                {queue_buffering_max_messages, 10000}
+            ]}
+        ]},
+
+        {client_consumer_id, [
+
+            {type, consumer},
+
+            {group_id, <<"erlkaf_consumer">>},
+            {topics, [
+                {<<"benchmark">>, [
+                    {callback_module, module_topic1},
+                    {callback_args, []},
+                    {dispatch_mode, one_by_one}
+                ]}
+            ]},
+            {topic_options, [
+                {auto_offset_reset, smallest}
+            ]},
+
+            {client_options, [
+                {offset_store_method, broker}
+            ]}
+        ]}
+    ]}
+]}
+```
+
+`global_client_options` will apply to all clients defined. In case the global property it's defined as well in the client
+options it's value will be overwritten.
+
+For producers in case you don't need to customize the topic properties you can omit the `topics` property as time they will
+be created on the first produce operation with default settings.
+
+
+### HTTP API
+
+The code snippet `Path = Req:get(raw_path)` is an Erlang expression commonly used within web frameworks
+like MochiWeb, Cowboy, or Elli to extract the raw, undecoded path from an HTTP request object (usually named Req).
+
+This is a standard pattern for accessing request information within these frameworks.
+
+- `Req` is a variable representing the HTTP request object, which is typically passed into handler functions.
+- `:get(raw_path)` is a function call made on the Req object (using Erlang's object-like call syntax for records
+  or parameterized modules) to retrieve the value associated with the `raw_path` field or key.
+- `raw_path` refers to the original, URL-encoded path component of the request URL, including the query string if present.
+
+Example Usage in `MochiWeb`
+
+A typical use case within a `MochiWeb` application's `loop/1` function might look like this:
+
+```erlang
+loop(Req) ->
+    RawPath = Req:get(raw_path), % Get the full raw path, e.g., <<"/some/page?id=1">>
+    {Path, _, _} = mochiweb_util:urlsplit_path(RawPath), % Extract just the path part, e.g., <<"/some/page">>
+    case Path of
+        <<"/">> ->
+            respond(Req, <<"Hello World!">>);
+        _ ->
+            respond(Req, <<"Page not found">>)
+    end.
+```
+
+```erlang
+erlang>
+erlang>
+erlang> Req = mochiweb_request:new(testing,'Get',"http://www.example.com/api/example",{1,1},mochiweb_headers:make([])).
+erlang> mochiweb_request:get(method,Req).
+erlang> mochiweb_request:get(path,Req).
+erlang> mochiweb_request:get(headers,Req).
+```
+
+In the example above, `mochiweb_util:urlsplit_path/1` is used to separate
+the path from the query string for routing purposes.
+
 ### 30 Sep 2025 by Oleg G.Kapranov
 
 [1]: http://127.0.0.1:15672
@@ -245,3 +349,9 @@ erl> maui_client:uuid().
 [5]: https://www.rabbitmq.com/docs/publishers
 [6]: https://www.rabbitmq.com/docs/consumers
 [7]: https://www.rabbitmq.com/tutorials/tutorial-three-python
+[8]: https://github.com/silviucpp/erlkaf
+[9]: https://github.com/kafka4beam/brod
+[10]: https://github.com/erleans/vonnegut
+[11]: https://github.com/BerkOzdilek/emq_kafka_bridge
+[12]: https://github.com/HCA-Healthcare/brod_oauth
+[13]: https://github.com/NimsHub/Kafka-with-Erlang

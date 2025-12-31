@@ -25,6 +25,7 @@
         ,off/0
         ,publish/1
         ,queue/1
+        ,retrieve/0
         ,retrieve/2
         ,start/0
         ,start_link/6
@@ -36,6 +37,9 @@
 
 -include("./_build/default/lib/amqp_client/include/amqp_client.hrl").
 -include("./apps/server/include/maui_server.hrl").
+
+-spec log(atom(),string()) -> string().
+log(Key,Value) -> io:format("~p: ~p~n",[Key,Value]).
 
 -spec binary(atom() | list() | binary()) -> binary().
 binary(A) when is_atom(A) -> list_to_binary(atom_to_list(A));
@@ -62,6 +66,10 @@ time_since_epoch() ->
 
 -spec timeout_millseconds() -> non_neg_integer().
 timeout_millseconds() -> 5_500.
+
+call(Args) -> gen_server:call(?SERVER,Args).
+call(Args,Opts) -> gen_server:call(?SERVER,Args,Opts).
+cast(Args) -> gen_server:cast(?SERVER,Args).
 
 -spec amqp_config() -> #amqp_params_network{connection_timeout :: non_neg_integer()
                                            ,heartbeat :: non_neg_integer()
@@ -163,7 +171,7 @@ start() ->
                 atom().
 stop() ->
   try
-    gen_server:call(?SERVER,stop,infinity)
+    call(stop,infinity)
   catch
     exit:{noproc, _} -> ok
   end.
@@ -194,7 +202,7 @@ delete_exchange(Channel,exchange,Exchange) ->
   ok.
 
 queue(Name) ->
-  gen_server:call(?SERVER,{queue,Name}).
+  call({queue,Name}).
 
 -spec delete_queue(pid(),atom(),binary()) -> ok.
 delete_queue(Channel,queue,Queue) ->
@@ -203,8 +211,11 @@ delete_queue(Channel,queue,Queue) ->
   io:format("Message count: ~p~n",[MessageCount]),
   ok.
 
+retrieve() ->
+  call(retrieve).
+
 consumer() ->
-  gen_server:cast(?SERVER,consumer).
+  cast(consumer).
 
 consume(Channel,Queue) ->
   consumer_start(Channel,Queue,self()).
@@ -297,6 +308,8 @@ consumer_loop(#consumer_state{channel=Channel
     stop ->
       basic_cancel(Channel,ConsumerTag),
       {stop,normal};
+    exit ->
+      {stop,normal};
     Msg ->
       error_logger:error_msg("amqp consumer received " "unexpected msg:~n~p~n",[Msg]),
       consumer_loop(ConsumerState)
@@ -337,23 +350,25 @@ basic_cancel(Channel,ConsumerTag) ->
                            {noreply,map(),non_neg_integer()} |
                            {stop,atom(),map()}.
 publish(Msg) when is_map(Msg) ->
-  gen_server:cast(?SERVER,{publish,jsx:encode(Msg)}).
+  cast({publish,jsx:encode(Msg)}).
 
 -spec retrieve(pid(),string()) -> ok.
 retrieve(Channel,Queue) ->
   GetMethod=#'basic.get'{queue=Queue,no_ack=false},
-  Result=amqp_channel:call(Channel,GetMethod),
-  case Result of
-  {#'basic.get_ok'{delivery_tag=DeliveryTag,redelivered=_Redelivered,exchange=_Exchange,routing_key=_RK,message_count=_MessageCount},Content} ->
-    io:format("Received message [~p]:~p~n", [DeliveryTag,Content#amqp_msg.payload]),
-    amqp_channel:cast(Channel,#'basic.ack'{delivery_tag=DeliveryTag}),
-    ok;
-  {#'basic.get_empty'{},no_content} ->
-    io:format("Queue is empty, no message received.~n"),
-    ok;
-  {error,Reason} ->
-    io:format("Error during basic.get:~p~n",[Reason]),
-    ok
+  case amqp_channel:call(Channel,GetMethod) of
+    {#'basic.get_ok'{delivery_tag=DeliveryTag,redelivered=_Redelivered,exchange=_Exchange,routing_key=_RK,message_count=_MessageCount},Content} ->
+      log('basic.get_ok',"start"),
+      io:format("Received message [~p]:~p~n", [DeliveryTag,Content#amqp_msg.payload]),
+      amqp_channel:cast(Channel,#'basic.ack'{delivery_tag=DeliveryTag}),
+      ok;
+    {'basic.get_empty',?RABBIT_EMPTY_STRING} ->
+      log('basic.get_empty',"no message"),
+      io:format("Queue is empty, no message received.~n"),
+      ok;
+    {error,Reason} ->
+      log('basic.get',"error"),
+      io:format("Error during basic.get:~p~n",[Reason]),
+      ok
   end.
 
 -spec start_link(
@@ -397,10 +412,10 @@ init([Config,Exchange,Queue,Type,RK,ConsumerTag]) ->
   ?DBG("FQueue:~p",[FQueue]),
   FQueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"}
                                            ,{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}
-                                           ],queue=binary(FQueue),exclusive=false,auto_delete=false,durable=true,nowait=false,passive=false},
+                                           ],queue=binary(FQueue),exclusive=true,auto_delete=true,durable=true,nowait=false,passive=false},
   QueueDeclare=#'queue.declare'{arguments=[{"x-ha-policy",longstr,"nodes"}
                                           ,{"x-ha-nodes",array,[{longstr,"lugatex@yahoo.com"}]}
-                                          ],queue=binary(Queue),exclusive=false,auto_delete=false,durable=true,nowait=false,passive=false},
+                                          ],queue=binary(Queue),exclusive=true,auto_delete=true,durable=false,nowait=false,passive=false},
   #'queue.declare_ok'{queue=FQueue,message_count=MessageCount,consumer_count=ConsumerCount}=amqp_channel:call(Channel,FQueueDeclare),
   #'queue.declare_ok'{queue=Queue,message_count=MessageCount,consumer_count=ConsumerCount}=amqp_channel:call(Channel,QueueDeclare),
   #'queue.bind_ok'{}=amqp_channel:call(Channel,#'queue.bind'{arguments=[],queue=FQueue,exchange=binary(Exchange),routing_key=binary(RK),nowait=false}),
@@ -476,6 +491,21 @@ handle_call(basic_cancel,_From,#maui_server{channel=Channel,consumer_tag=Consume
   BasicCancel=#'basic.cancel'{consumer_tag=ConsumerTag,nowait=false},
   #'basic.cancel_ok'{consumer_tag=ConsumerTag}=amqp_channel:call(Channel,BasicCancel),
   {reply,ok,State,timeout_millseconds()};
+handle_call(retrieve,_From,#maui_server{channel=Channel,queue=Queue}=State) ->
+  Method=#'basic.get'{queue=Queue,no_ack=false},
+  case amqp_channel:call(Channel,Method) of
+    {#'basic.get_ok'{delivery_tag=DeliveryTag,redelivered=_Redelivered,exchange=_Exchange,routing_key=_RK,message_count=_MessageCount},Content} ->
+      Msg=jsx:decode(Content#amqp_msg.payload),
+      io:format("Received message [~p]:~p~n", [DeliveryTag,Msg]),
+      amqp_channel:cast(Channel,#'basic.ack'{delivery_tag=DeliveryTag}),
+      {reply,ok,State,timeout_millseconds()};
+    {'basic.get_empty',<<>>} ->
+      io:format("Queue is empty, no message received.~n"),
+      {reply,ok,State,timeout_millseconds()};
+    {error,Reason} ->
+      io:format("Error during basic.get:~p~n",[Reason]),
+      {reply,ok,State,timeout_millseconds()}
+  end;
 handle_call(stop,_From,State) -> {stop,normal,ok,State};
 handle_call(_Request,_From,State) -> {reply,ok,State}.
 
@@ -543,12 +573,13 @@ handle_info(timeout,#maui_server{channel=Channel,exchange=Exchange,queue=Queue,r
   io:format("~s~n",[jsx:encode(Term)]),
   {noreply,State,timeout_millseconds()};
 handle_info({deliver,RK,Header,Payload},#maui_server{routing_key=RK}=State) ->
-   io:format("demo  header: ~p~n",[Header]),
-   io:format("demo payload: ~p~n", [jsx:decode(Payload)]),
+  io:format("demo  header: ~p~n",[Header]),
+  io:format("demo payload: ~p~n", [jsx:decode(Payload)]),
   {noreply,State,timeout_millseconds()};
-handle_info({#'basic.return'{exchange=Exchange,reply_code=_ReplyCode,reply_text=?RABBIT_UNROUTABLE,routing_key=_RK},Payload},State) ->
-  error_logger:error_msg("unroutable (~p): ~p",[?MODULE,Exchange]),
-  {stop,{unroutable,Exchange,Payload},State};
+handle_info({#'basic.return'{reply_code=_ReplyCode,reply_text=_ReplyText,exchange=Exchange,routing_key=_RK},_Payload},State) ->
+  error_logger:error_msg("unroutable (~p): ~p",[?SERVER,Exchange]),
+  {noreply,State};
+handle_info(shutdown,State) -> {stop,normal,State};
 handle_info(Info,State) ->
   io:format("unexpected info: ~p~n",[Info]),
   {noreply,State}.
@@ -566,7 +597,6 @@ code_change(_OldVsn,State,_Extra) -> {ok,State}.
 -if(?OTP_RELEASE > 23).
 -else.
 -endif.
-
 %%%_* Tests ============================================================
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
