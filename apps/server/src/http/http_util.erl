@@ -1,7 +1,7 @@
 -module(http_util).
 -author("Oleg G.Kapranov <lugatex@yahoo.com>").
 
--export([start_rabbitmq_channel/3]).
+-export([amqp_config/0,start_rabbitmq_channel/3]).
 
 -include("./_build/default/lib/amqp_client/include/amqp_client.hrl").
 
@@ -10,33 +10,33 @@ binary(A) when is_atom(A) -> list_to_binary(atom_to_list(A));
 binary(L) when is_list(L) -> list_to_binary(L);
 binary(B) when is_binary(B) -> B.
 
+-spec amqp_config() -> [tuple()].
+amqp_config() ->
+  {ok,RabbitConnectionTimeout}=application:get_env(server,rabbit_connection_timeout),
+  {ok,RabbitHeartbeat}=application:get_env(server,rabbit_heartbeat),
+  {ok,RabbitHost}=application:get_env(server,rabbit_host),
+  {ok,RabbitPassword}=application:get_env(server,rabbit_password),
+  {ok,RabbitPort}=application:get_env(server,rabbit_port),
+  {ok,RabbitSSLOptions}=application:get_env(server,rabbit_ssl_options),
+  {ok,RabbitUsername}=application:get_env(server,rabbit_username),
+  {ok,RabbitVirtualHost}=application:get_env(server,rabbit_virtual_host),
+  [{connection_timeout,RabbitConnectionTimeout}
+  ,{heartbeat,RabbitHeartbeat}
+  ,{host,RabbitHost}
+  ,{password,RabbitPassword}
+  ,{port,RabbitPort}
+  ,{ssl_options,RabbitSSLOptions}
+  ,{username,RabbitUsername}
+  ,{virtual_host,RabbitVirtualHost}
+  ].
+
 -spec amqp_params(map()) -> map().
-amqp_params(Args) ->
-   amqp_options:parse(Args).
+amqp_params(Config) ->
+   amqp_options:parse(Config).
 
--spec amqp_args(list()) -> #amqp_params_network{connection_timeout :: non_neg_integer()
-                                               ,heartbeat :: non_neg_integer()
-                                               ,host :: string()
-                                               ,password :: string()
-                                               ,port :: non_neg_integer()
-                                               ,ssl_options :: atom()
-                                               ,username :: string()
-                                               ,virtual_host :: string()
-                                               }.
-amqp_args(Config) ->
-  #amqp_params_network{connection_timeout=proplists:get_value(connection_timeout,Config)
-                      ,heartbeat=proplists:get_value(heartbeat,Config)
-                      ,host=proplists:get_value(host,Config)
-                      ,password=proplists:get_value(password,Config)
-                      ,port=proplists:get_value(port,Config)
-                      ,ssl_options=proplists:get_value(ssl_options,Config)
-                      ,username=proplists:get_value(username,Config)
-                      ,virtual_host=proplists:get_value(virtual_host,Config)
-                      }.
-
--spec start_rabbitmq_channel(map(),binary(),binary()) -> {ok,pid()}.
+-spec start_rabbitmq_channel(list(),binary(),binary()) -> {ok,pid()}.
 start_rabbitmq_channel(Config,Name,Type) ->
-  {ok,Connection}=amqp_connection:start(amqp_params(amqp_args(Config))),
+  {ok,Connection}=amqp_connection:start(amqp_params(Config)),
   {ok,Channel}=amqp_connection:open_channel(Connection),
   ExchangeDeclare=#'exchange.declare'{arguments=[]
                                      ,auto_delete=false
