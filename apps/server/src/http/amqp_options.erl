@@ -1,4 +1,4 @@
--module(http_util).
+-module(amqp_options).
 -author("Oleg G.Kapranov <lugatex@yahoo.com>").
 
 -export([amqp_config/0,start_rabbitmq_channel/3]).

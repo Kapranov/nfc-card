@@ -328,13 +328,113 @@ loop(Req) ->
     end.
 ```
 
+### MochiWeb
+
+```
+bash> openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ~/api_server/cert/cert.key -out ~/api_server/cert/cert.crt
+```
+
 ```erlang
-erlang>
-erlang>
-erlang> Req = mochiweb_request:new(testing,'Get',"http://www.example.com/api/example",{1,1},mochiweb_headers:make([])).
-erlang> mochiweb_request:get(method,Req).
-erlang> mochiweb_request:get(path,Req).
-erlang> mochiweb_request:get(headers,Req).
+erl> mochiweb_base64url:decode(mochiweb_base64url:encode(Path)).
+
+erl> ServerFun = fun() -> [] end.
+erl> Opts = [].
+erl> ServerOpts = [{ip, "127.0.0.1"}, {port, 4999}, {backlog, 5}, {loop, ServerFun}].
+erl> {ok, Server} = mochiweb_socket_server:start(ServerOpts ++ Opts).
+erl> Port = mochiweb_socket_server:get(Server, port).
+erl> mochiweb_socket_server:stop(Server).
+
+
+erl> Headers = mochiweb_headers:make([{"Accept", "text/html"}]).
+erl> Headers = mochiweb_headers:make([{"content-type", "application/json"}, {"date", "Sun, 11 Jan 2026 05:07:19"}]).
+erl> mochiweb_headers:get_value(K, Headers).
+erl> mochiweb_headers:insert(Header, Value, Headers)).
+
+erl> {ok, Socket} = gen_tcp:listen(0, [{active, false}]).
+erl> Req = mochiweb_request:new(Socket, 'GET', "/foo", {1, 1}, Headers).
+erl> mochiweb_request:get(path,Req).
+erl> mochiweb_socket:close(Socket).
+erl> gen_tcp:close(Socket).
+
+erl> ReplyPrefix = "You requested: ".
+erl> ExHeaders = [{"Set-Cookie", "foo=bar"}, {"Set-Cookie", "foo=baz"}],
+erl> ServerFun = fun (Req) ->
+                        Reply = ReplyPrefix ++ mochiweb_request:get(path, Req),
+                        mochiweb_request:ok({"text/plain", ExHeaders, Reply}, Req)
+                    end.
+
+erl> ServerFun = fun (Req) ->
+                        Body = mochiweb_request:recv_body(Req),
+                        Headers = [{"Content-Type", "application/octet-stream"}],
+                        mochiweb_request:respond({201, Headers, Body}, Req)
+                    end,
+
+erl> Req = mochiweb_request:new(nil, 'GET', "/foo", {1, 1}, mochiweb_headers:make([{"Content-Type","application/json"}])).
+
+erl> Headers = mochiweb_headers:make([{"Content-type", "application/json"},{'Content-Length', "0"}]).
+erl> ContentLength = list_to_integer(mochiweb_headers:get_value("Content-Length", Headers)).
+erl> Req = mochiweb_request:new(testing, [{recv_body, <<"Hello world!">>}], 'GET', "/foo", {1, 1}, Headers).
+erl> mochiweb_request:get(method,Req).
+erl> mochiweb_request:get(opts,Req).
+erl> mochiweb_request:get(path,Req).
+erl> mochiweb_request:get(raw_path,Req).
+erl> mochiweb_request:get(headers,Req).
+erl> mochiweb_request:recv_body(Req).
+
+bash> openssl req -newkey rsa:2048 -nodes -x509 -subj '/CN=name-you-want.example.com' -days 3650 -out server.cert -keyout server.key
+bash> openssl s_server -accept 7781 -cert server.cert -key server.key -WWW
+
+erl> inets:start(httpc, [{profile, my_client_profile}]).
+erl> httpc:request(get, {Url, []}, [], []).
+erl> httpc:get_options(all).
+
+bash> erl -S httpd
+bash> erl -S httpd serve
+bash> erl -S httpd serve path/to/dir
+bash> erl -s inets -eval 'inets:start(httpd,[{server_name,"127.0.0.1"},{document_root, "."},{server_root, "."},{port, 8080},{mime_types,[{"html","text/html"},{"htm","text/html"}]}]).'
+bash> w3m http://localhost:8080
+
+erl> application:start(inets).
+erl> Path = "/home/kapranov/Projects/bin/erlang-projects/erlang-rabbitmq/mochiweb/examples/example_project/priv/www".
+erl> inets:start(httpd,[{server_name,"localhost"},{document_root, Path},{server_root, Path},{port, 8080},{mime_types,[{"html","text/html"},{"htm","text/html"}]}]).
+erl> httpc:request("http://localhost:8080").
+erl> httpc:request(get, {"http://localhost:8080", []}, [], []).
+erl> Headers = [{"content-type", "text/plain"}].
+erl> Headers = [{"content-type", "text/html"}].
+erl> Headers = [{"content-type", "application/json"}].
+erl> httpc:request(get, {"http://localhost:8080", Headers}, [], []).
+erl> httpc:request(get, {"http://localhost:8080", []}, [{"content-type", "text/plain"}], []).
+erl> application:stop(inets).
+
+erl> Hexkey = mochihex:to_hex(crypto:strong_rand_bytes(8)).
+erl> Req = mochiweb_request:new(nil,'GET',"/foo",{1, 1},mochiweb_headers:make([{"Sec-WebSocket-Key","Xn3fdKyc3qEXPuj2A3O+ZA=="}])).
+erl> SecKey = mochiweb_request:get_header_value("sec-websocket-key",Req).
+erl> BinKey = list_to_binary(SecKey).
+erl> Bin = <<BinKey/binary,"258EAFA5-E914-47DA-95CA-C5AB0DC85B11">>.
+erl> Challenge = base64:encode(crypto:hash(sha,Bin)).
+erl> Headers = [{"Content-Type","application/octet-stream"},{"Sec-Websocket-Accept",Challenge}].
+erl> SecKey =/= undefined.
+erl> if SecKey =/= undefined -> hybi_handshake(SecKey);
+           Sec1Key =/= undefined andalso Sec2Key =/= undefined ->
+             Host = ReqM:get_header_value("Host", Req),
+             Path = ReqM:get(path, Req),
+             Body = ReqM:recv(8, Req),
+             Scheme = scheme(Req),
+             hixie_handshake(Scheme, Host, Path, Sec1Key, Sec2Key, Body, Origin);
+           true -> error
+        end.
+
+hixie_handshake(Scheme,Host,Path,Key1,Key2,Body,Origin) ->
+  Location = lists:concat([Scheme,Host,Path]),
+  Challenge = erlang:md5(Ckey),
+  Response = {101,[{"Upgrade","WebSocket"},{"Connection","Upgrade"},{"Sec-WebSocket-Origin",Origin},{"Sec-WebSocket-Location",Location}],Challenge},
+  {hixie, Response}.
+
+ServerFun = fun (Req) ->
+    Body = mochiweb_request:recv_body(Req),
+    Headers = [{"Content-Type", "application/octet-stream"}],
+    mochiweb_request:respond({201, Headers, Body}, Req)
+end.
 ```
 
 In the example above, `mochiweb_util:urlsplit_path/1` is used to separate
@@ -342,16 +442,40 @@ the path from the query string for routing purposes.
 
 ### 30 Sep 2025 by Oleg G.Kapranov
 
-[1]: http://127.0.0.1:15672
-[2]: http://192.168.2.157:15672
-[3]: https://www.rabbitmq.com/docs/management-cli
-[4]: https://raw.githubusercontent.com/rabbitmq/rabbitmq-server/v4.1.x/deps/rabbitmq_management/bin/rabbitmqadmin
-[5]: https://www.rabbitmq.com/docs/publishers
-[6]: https://www.rabbitmq.com/docs/consumers
-[7]: https://www.rabbitmq.com/tutorials/tutorial-three-python
-[8]: https://github.com/silviucpp/erlkaf
-[9]: https://github.com/kafka4beam/brod
+[1]:  http://127.0.0.1:15672
+[2]:  http://192.168.2.157:15672
+[3]:  https://www.rabbitmq.com/docs/management-cli
+[4]:  https://raw.githubusercontent.com/rabbitmq/rabbitmq-server/v4.1.x/deps/rabbitmq_management/bin/rabbitmqadmin
+[5]:  https://www.rabbitmq.com/docs/publishers
+[6]:  https://www.rabbitmq.com/docs/consumers
+[7]:  https://www.rabbitmq.com/tutorials/tutorial-three-python
+[8]:  https://github.com/silviucpp/erlkaf
+[9]:  https://github.com/kafka4beam/brod
 [10]: https://github.com/erleans/vonnegut
 [11]: https://github.com/BerkOzdilek/emq_kafka_bridge
 [12]: https://github.com/HCA-Healthcare/brod_oauth
 [13]: https://github.com/NimsHub/Kafka-with-Erlang
+[14]: https://daemon.pizza/posts/erlang-httpc/
+[15]: https://www.proctor-it.com/erlang-thursday-httpc-request-1-and-httpc-request-4/
+[16]: https://medium.com/@agus81/erlang-is-fun-series-application-server-on-mochiweb-part-2-faae9e992464
+[17]: https://elixirforum.com/t/httpc-cheatsheet/50337
+[18]: https://erlangforums.com/t/is-httpc-considered-bad-why-shouldn-t-i-use-it/3505
+[19]: https://erlangforums.com/t/httpc-httpd-improvements/2622
+[20]: https://gist.github.com/derdesign/4598832
+[21]: https://gist.github.com/willurd/5720255#erlang
+[22]: https://github.com/jkvor/hello-erlang/tree/master
+[23]: https://github.com/tsloughter/reqerl
+[24]: https://github.com/erlang/otp/issues/5074
+[25]: https://github.com/erlang/otp/pull/7299
+[26]: https://github.com/erlang/otp/pull/9473
+[27]: https://github.com/erlang/otp/pull/9473/commits/12e9c89cf851c6e275ffb54f6d7b13c1ba25b04b
+[28]: https://github.com/erlang/otp/blob/master/lib/inets/src/http_client/httpc.erl
+[29]: https://www.erlang.org/doc/apps/inets/httpc.html
+[30]: https://habr.com/ru/articles/111600/
+[31]: https://habr.com/ru/articles/111350/
+[32]: https://habr.com/ru/articles/111252/
+[33]: https://github.com/hexedpackets/trot
+[34]: https://github.com/benoitc/mochicow
+[35]: https://git.sr.ht/~fancycade/nine_cowboy/tree/main/item/src/nine_cowboy_mid.erl
+[36]: https://github.com/inaka/shotgun
+[37]: https://github.com/esl/fusco
