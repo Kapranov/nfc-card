@@ -5,7 +5,8 @@
     {mod, {nfc_card_app, []}},
     {applications, [
         kernel,
-        stdlib
+        stdlib,
+        crypto
     ]},
     {env, []},
     {modules, []},

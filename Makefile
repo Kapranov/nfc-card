@@ -1,21 +1,23 @@
 REBAR=rebar3
 
-.PHONY: get-deps
-
 all:
 		@$(REBAR) get-deps
 		@rm -rf _build
 		@echo "Copying nfc_card to deps/"
 		@$(REBAR) compile
 
+edoc:
+	  @$(REBAR) edoc
+
 clean:
 		@$(REBAR) clean
 
-clean-all:
+remove:
 		@rm -rf _build
 		@rm rebar.lock
 
-compile:
+build:
+	  @$(REBAR) get-deps
 		@$(REBAR) compile
 
 console:
@@ -27,7 +29,7 @@ dialyzer:
 eunit:
 		@$(REBAR) eunit
 
-get-deps:
+deps:
 		@$(REBAR) get-deps
 
 test:
@@ -38,5 +40,7 @@ run:
 		@$(REBAR) compile
 		@$(REBAR) shell
 
-run-consumer:
+consumer:
 		@erl -pa ./ebin ./deps/amqp_client/ebin ./deps/rabbit_common/ebin -run platform_message_consumer start -noshell
+
+.PHONY: all build clean console consumer deps dialyzer edoc eunit remove run test
