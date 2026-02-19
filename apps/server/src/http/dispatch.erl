@@ -36,9 +36,12 @@ init([]) ->
   {ok,[]}.
 
 % webmachine_util:ensure_all_started(mochiweb).
-% Req = mochiweb_request:new(testing,'Get',"http://www.example.com/api/example",{1,1},mochiweb_headers:make([])).
-% Headers = mochiweb_headers:make([{"Accept","application/json"}]).
-% Req = mochiweb_request:new(testing,'Get',"http://www.example.com/api/example",{1,1},Headers).
+
+% Headers = mochiweb_headers:make([{"content-type", "application/json"}]).
+% Req = mochiweb_request:new(testing,'get',"http://localhost:8080/hello_world",{1,1},Headers).
+% mochiweb_request:respond({200,[{"Content-Type", "application/json"}],["{\"message\":  \"Hello World\"}"]}, Req).
+%
+%
 % Top = <<"<!DOCTYPE HTML PUBLIC \"-//IETF//DTD "
 % "HTML 2.0//EN\"><html><head><title>301 "
 % "Moved Permanently</title></head><body><h1>Mov"

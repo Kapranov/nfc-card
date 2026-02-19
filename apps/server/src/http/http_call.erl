@@ -4,17 +4,10 @@
 -behaviour(gen_server).
 
 -export([dispatch_request/2]).
--export([amqp_config/0
-        ,code_change/3
-        ,handle_call/3
-        ,handle_cast/2
-        ,handle_info/2
-        ,init/1
-        ,start_link/3
-        ,terminate/2
-        ]).
+-export([amqp_config/0 ,code_change/3 ,handle_call/3 ,handle_cast/2 ,handle_info/2 ,init/1 ,start_link/3 ,terminate/2 ]).
 -export([body_length_headers/1,client_headers/2,random_binary/2,random_id/1,random_nchar/0,random_onechar/0]).
--export([start_server/0, responder/1,fire/0]).
+-export([start/1,stop/1,get_option/2]).
+-export([request/2,request/3,request/5,retrieve/3]).
 
 -include("./_build/default/lib/amqp_client/include/amqp_client.hrl").
 
@@ -85,10 +78,6 @@ handle_request('GET',"/http/api/test",_,Channel) ->
 publish_message(_,_,_) ->
   {404,[{"Content-Type","text/plain"}],<<"Message Not Defined">>}.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 -spec body_length_headers(string()) -> list().
 body_length_headers(Body) ->
     ["Content-Length: ", integer_to_list(byte_size(Body)), "\r\n"].
@@ -125,94 +114,103 @@ random_nchar() ->
 random_onechar() ->
   [random_id(<<C>>) || C <- lists:seq(0,255)].
 
-fire() ->
-  URL = "http://127.0.0.1:8080/api",
-  Method = get,
-  %Headers = [{"content-type", "text/plain"}, {"date", "Sun, 11 Jan 2026 05:07:19"}],
-  Headers = [{"content-type", "text/plain"}],
-  httpc:request(Method, {URL, Headers}, [], []).
+-ifdef(OTP_RELEASE).
+-if((?OTP_RELEASE) >= 21).
+-define(HAS_DIRECT_STACKTRACE, true).
+-endif.
+-endif.
+-ifdef(HAS_DIRECT_STACKTRACE).
+-define(CAPTURE_EXC_PRE(Type,What,Trace),Type:What:Trace).
+-define(CAPTURE_EXC_GET(Trace),Trace).
+-else.
+-define(CAPTURE_EXC_PRE(Type,What,Trace),Type:What).
+-define(CAPTURE_EXC_GET(Trace),erlang:get_stacktrace()).
+-endif.
 
-start_server() ->
-  ets:new(my_table,[named_table,public,set,{keypos, 1}]),
-  mochiweb_http:start([{port,8080},{loop, {?MODULE,responder}}]).
+-spec get_option(atom(),[{atom(), boolean() | integer() | string()}]) -> {atom() | boolean() | integer() | string(), list() | [{atom(), boolean() | integer() | string()}]}.
+get_option(Option,Options) ->
+  {proplists:get_value(Option,Options),
+   proplists:delete(Option,Options)}.
 
-%%% Options = [{ip, {127,0,0,1}}, {port, 8080}, {docroot, "tmp"}].
-%%% mochiweb:start(Options).
-%%% [httpc:request(post, {"http://localhost:8080/" ++ Path, [], "application/json", "{}"}, [], []) || _ <- lists:seq(1, 10), Path <- ["begin_url", "end_url"]].
-%%%
-%%%
-%%%
+-spec start(list()) -> pid().
+start(Opts) ->
+  application:start(inets),
+  {Name,Opts1}=get_option(name,Opts),
+  {Port,Opts2}=get_option(port,Opts1),
+  {Ip,Opts3}=get_option(ip,Opts2),
+  {Backlog,Opts4}=get_option(backlog,Opts3),
+  {Delay,Opts5}=get_option(nodelay,Opts4),
+  {Pool,Opts6}=get_option(acceptor_pool_size,Opts5),
+  {Ssl,Opts7}=get_option(ssl,Opts6),
+  {Profile,Opts8}=get_option(profile_fun,Opts7),
+  {Link,Opts9}=get_option(link,Opts8),
+  {Recbuf,_}=get_option(recbuf,Opts9),
+  Args=[{name,Name},{port,Port},{ip,Ip},{backlog,Backlog},{nodelay,Delay},{acceptor_pool_size,Pool},{ssl,Ssl},{profile_fun,Profile},{link,Link},{recbuf, Recbuf},{loop, fun responder/1} | []],
+  mochiweb_http:start(Args).
 
-%%% Headers = mochiweb_headers:make([{"Content-Type", "text/plain"}]).
-%%% Req = mochiweb_request:new(testing, 'GET', "/foo", {1, 1}, Headers).
-%%% mochiweb_request:respond({201,[{"Content-Type", "text/plain"}], <<>>},Req).
-%%% mochiweb_request:ok({"text/plain", Headers, "/foo"}, Req).
-
-%%% rabbitmq-mochiweb/src/rabbit_web_dispatch_registry.erl
-%%%
-%%% -define(ETS, rabbitmq_web_dispatch).
-%%% init([]) ->
-%%%   ?ETS = ets:new(?ETS, [named_table, public]),
-%%%   {ok, undefined}.
-%%%
-%%% port(Listener) -> proplists:get_value(port, Listener).
-%%%
-%%% lookup_dispatch(Lsnr) ->
-%%%    case ets:lookup(?ETS, port(Lsnr)) of
-%%%        [{_, Lsnr, S, F}]   -> {ok, {S, F}};
-%%%        [{_, Lsnr2, S, _F}] -> {error, {different, first_desc(S), Lsnr2}};
-%%%        []                  -> {error, {no_record_for_listener, Lsnr}}
-%%%    end.
-%%% first_desc([{_N, _S, _H, {_, Desc}} | _]) -> Desc.
-%%%
-%%% list() ->
-%%%    [{Path, Desc, Listener} ||
-%%%        {_P, Listener, Selectors, _F} <- ets:tab2list(?ETS),
-%%%        {_N, _S, _H, {Path, Desc}} <- Selectors].
-%%%
-%%% listener_by_name(Name) ->
-%%%    case [L || {_P, L, S, _F} <- ets:tab2list(?ETS), contains_name(Name, S)] of
-%%%        [Listener] -> Listener;
-%%%        []         -> exit({not_found, Name})
-%%%    end.
-%%%
-%%% contains_name(Name, Selectors) ->
-%%%    lists:member(Name, [N || {N, _S, _H, _L} <- Selectors]).
-%%%
-%%% list(Listener) ->
-%%%    {ok, {Selectors, _Fallback}} = lookup_dispatch(Listener),
-%%%    [{Path, Desc} || {_N, _S, _H, {Path, Desc}} <- Selectors].
-%%%
-%%%
-%%% terminate(_, _) ->
-%%%   true = ets:delete(?ETS),
-%%%   ok.
-%%%
-%%% lookup(Listener, Req) ->
-%%%    case lookup_dispatch(Listener) of
-%%%        {ok, {Selectors, Fallback}} ->
-%%%            case catch match_request(Selectors, Req) of
-%%%                {'EXIT', Reason} -> {lookup_failure, Reason};
-%%%                no_handler       -> {handler, Fallback};
-%%%                Handler          -> {handler, Handler}
-%%%            end;
-%%%        Err ->
-%%%            Err
-%%%    end.
-%%%
-%%% lookup_dispatch(Lsnr) ->
-%%%    case ets:lookup(?ETS, port(Lsnr)) of
-%%%        [{_, Lsnr, S, F}]   -> {ok, {S, F}};
-%%%        [{_, Lsnr2, S, _F}] -> {error, {different, first_desc(S), Lsnr2}};
-%%%        []                  -> {error, {no_record_for_listener, Lsnr}}
-%%%    end.
-%%% first_desc([{_N, _S, _H, {_, Desc}} | _]) -> Desc.
-%%%
-
-
+-spec responder(tuple()) -> tuple().
 responder(Req) ->
-  %mochiweb_request:respond({200,[{"Content-Type","text/html"}],["<html><body>Hello</body></html>"]},Req).
-  case ets:lookup(my_table, some_key) of
-    [{_,Value}] -> Req:ok({"text/plain", Value});
-    [] -> Req:not_found()
+  "/" ++ Path = mochiweb_request:get(path,Req),
+  try case mochiweb_request:get(method,Req) of
+        Method when Method =:= 'GET';
+                    Method =:= 'HEAD' ->
+          case Path of
+            "hello_world" ->
+              io:format("!!! MochiWeb return request !!! => ~p~n",[Req]),
+              mochiweb_request:respond({200,[{"Content-Type","application/json"}],"{\"message\":  \"Hello World\"}"},Req);
+            _ ->
+              mochiweb_request:serve_file(Path,[],Req)
+          end;
+        'POST' ->
+          case Path of
+            _ -> mochiweb_request:not_found(Req)
+          end;
+        _ ->
+          mochiweb_request:respond({501,[],[]},Req)
+      end
+  catch ? CAPTURE_EXC_PRE ( Type , What , Trace ) ->
+          Report=["web request failed",{path,Path},{type,Type},{what,What},{trace, ? CAPTURE_EXC_GET ( Trace )}],
+          error_logger:error_report(Report),
+          mochiweb_request:respond({500,[{"Content-Type","text/plain"}],"request failed, sorry\n"},Req)
   end.
+
+-spec request(atom(),string()) -> tuple().
+request(Method, Uri) ->
+  request(Method, Uri, []).
+
+-spec request(atom(), string(), list()) -> tuple().
+request(Method, Uri, Headers) ->
+  do_request(Method, {Uri, Headers}).
+
+-spec request(atom(), string(), list(), string(), string()) -> tuple().
+request(Method, Uri, Headers, ContentType, Body) ->
+  case Method of
+    Method when Method =:= 'PUT'; Method =:= 'POST'; Method =:= 'DELETE' ->
+      do_request(Method, {Uri, Headers, ContentType, Body});
+    _ ->
+      do_request(Method, {Uri, Headers})
+  end.
+
+-spec do_request(atom(), tuple()) -> tuple().
+do_request(Method, Request) ->
+  handle_response(httpc:request(
+    Method,
+    Request,
+    [{ssl, [{verify, verify_none}]}],
+    []
+  )).
+
+-spec handle_response(tuple()) -> tuple().
+handle_response(Resp) ->
+  case Resp of
+    {ok, {_, RespHeaders, RespBody}} ->
+      {ok, RespHeaders, RespBody};
+    {error, _Reason} = E -> E
+  end.
+
+-spec stop(atom()) -> ok.
+stop(Name) -> mochiweb_http:stop(Name).
+
+-spec retrieve(atom(),string(),[{string(),string()}]) -> tuple().
+retrieve(Method,Url,Headers) ->
+  httpc:request(Method,{Url,Headers},[],[{body_format, binary}, {full_result, false}]).

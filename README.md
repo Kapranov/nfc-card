@@ -406,6 +406,29 @@ erl> httpc:request(get, {"http://localhost:8080", Headers}, [], []).
 erl> httpc:request(get, {"http://localhost:8080", []}, [{"content-type", "text/plain"}], []).
 erl> application:stop(inets).
 
+erl> Opts = [{name,testing},{port,8080},{path,"http://localhost/api"}].
+erl> kilauea:start(Opts).
+erl> httpc:request("http://localhost:8080/").
+erl> httpc:request("http://localhost:8080/proba").
+erl> httpc:request("http://localhost:8080/hello_world").
+erl> kilauea:request(get,"http://localhost:8080/").
+erl> kilauea:request(get,"http://localhost:8080/proba").
+erl> kilauea:request(get,"http://localhost:8080/hello_world").
+
+
+erl> Profile = Profile = [{name, http_call}, {port, 8080}, {active_sockets, false}, {timing, 3000}].
+erl> Opts = [{name,http_call},{port,8080},{ip,"127.0.0.1"},{backlog, 10},{nodelay, true},{acceptor_pool_size, 10}, {ssl, false},{profile_fun, fun () -> Profile end},{link, false}, {recbuf, 1}].
+erl> http_call:start(Opts).
+erl> http_call:retrieve(get, "http://localhost:8080/hello_world", [{"Content-Type","application/json"}]).
+erl> http_call:retrieve(get, "http://localhost:8080/hello_world", [{"Content-Type","text/plain"}]).
+erl> http_call:retrieve(get, "http://localhost:8080/hello", [{"Content-Type","application/json"}]).
+erl> http_call:request(get, "http://localhost:8080/hello_world").
+erl> http_call:request(get, "http://localhost:8080/hello_world", [{"Content-Type","application/json"}]).
+erl> http_call:request(get, "http://localhost:8080/hello_world", [{"Content-Type","application/json"}], "application/json", "Aloha").
+erl> http_call:request(put, "http://localhost:8080/hello_world", [{"Content-Type","application/json"}], "application/json", "Aloha").
+erl> http_call:request(post, "http://localhost:8080/hello_world", [{"Content-Type","application/json"}], "application/json", "Aloha").
+erl> http_call:request(delete, "http://localhost:8080/hello_world", [{"Content-Type","application/json"}], "application/json", "Aloha").
+
 erl> Hexkey = mochihex:to_hex(crypto:strong_rand_bytes(8)).
 erl> Req = mochiweb_request:new(nil,'GET',"/foo",{1, 1},mochiweb_headers:make([{"Sec-WebSocket-Key","Xn3fdKyc3qEXPuj2A3O+ZA=="}])).
 erl> SecKey = mochiweb_request:get_header_value("sec-websocket-key",Req).
