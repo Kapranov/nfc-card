@@ -1,4 +1,4 @@
--module(http_call).
+-module(http_mochiweb).
 -author("Oleg G.Kapranov <lugatex@yahoo.com>").
 
 -behaviour(gen_server).
@@ -52,12 +52,11 @@ init([Config,Name,Type]) ->
   {ok,#state{channel=Channel}}.
 
 handle_call({request,Req},_,State=#state{channel=Channel}) ->
-  Method=Req:get(method),
-  Path=Req:get(raw_path),
-  Body=Req:recv_body(),
-  Response=handle_request(Method,Path,Body,Channel),
-  Req:respond(Response),
-  Req:cleanup(),
+  Method=mochiweb_request:get(method,Req),
+  Path=mochiweb_request:get(raw_path,Req),
+  Response=handle_request(Method,Path,Channel),
+  mochiweb_request:respond(Response),
+  mochiweb_request:cleanup(Req),
   {reply,ok,State};
 handle_call(_Msg,_From,State) -> {reply,ok,State}.
 
@@ -72,11 +71,15 @@ terminate(_Reason,_State) -> ok.
 
 code_change(_OldVsn,State,_Extra) -> {ok,State}.
 
-handle_request('GET',"/http/api/test",_,Channel) ->
+handle_request('GET',"/http/api/test",Channel) ->
   publish_message(<<"test">>,"test",Channel).
 
 publish_message(_,_,_) ->
-  {404,[{"Content-Type","text/plain"}],<<"Message Not Defined">>}.
+  Code=200,
+  Headers=[{"Content-Type","application/json"}],
+  Body="{\"message\":  \"Hello World\"}",
+  %{404,[{"Content-Type","text/plain"}],<<"Message Not Defined">>}.
+  {Code,Headers,Body}.
 
 -spec body_length_headers(string()) -> list().
 body_length_headers(Body) ->
@@ -114,6 +117,13 @@ random_nchar() ->
 random_onechar() ->
   [random_id(<<C>>) || C <- lists:seq(0,255)].
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% ../erlang-rabbitmq/rabbitmq-server/deps/rabbitmq_trust_store/src/rabbit_trust_store_http_provider.erl
+%
+
 -ifdef(OTP_RELEASE).
 -if((?OTP_RELEASE) >= 21).
 -define(HAS_DIRECT_STACKTRACE, true).
@@ -146,7 +156,12 @@ start(Opts) ->
   {Link,Opts9}=get_option(link,Opts8),
   {Recbuf,_}=get_option(recbuf,Opts9),
   Args=[{name,Name},{port,Port},{ip,Ip},{backlog,Backlog},{nodelay,Delay},{acceptor_pool_size,Pool},{ssl,Ssl},{profile_fun,Profile},{link,Link},{recbuf, Recbuf},{loop, fun responder/1} | []],
-  mochiweb_http:start(Args).
+  {ok,Pid} =mochiweb_http:start(Args),
+  Pid.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Req = {mochiweb_request,[Pid,[{recbuf,1}],'GET',"/hello_world",{1,1},{4,{"content-type",{'Content-Type',"application/json"},{"content-length",{'Content-Length',"0"},{"connection",{'Connection',"keep-alive"},nil,nil},nil},{"host",{'Host',"localhost:8080"},nil,nil}}}]}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -spec responder(tuple()) -> tuple().
 responder(Req) ->
@@ -157,7 +172,11 @@ responder(Req) ->
           case Path of
             "hello_world" ->
               io:format("!!! MochiWeb return request !!! => ~p~n",[Req]),
-              mochiweb_request:respond({200,[{"Content-Type","application/json"}],"{\"message\":  \"Hello World\"}"},Req);
+              Code=200,
+              Headers=[{"Content-Type","application/json"}],
+              Term = #{message  => <<"Hello World">>},
+              Body = jsx:encode(Term),
+              mochiweb_request:respond({Code,Headers,Body},Req);
             _ ->
               mochiweb_request:serve_file(Path,[],Req)
           end;

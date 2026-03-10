@@ -1,15 +1,14 @@
--module(server_app).
+-module(wakako_app).
 -behaviour(application).
--export([start/2,stop/1]).
+-export([ensure_started/1,start_link/0,start/2,stop/1]).
 
 ensure_started(App) ->
   case application:start(App) of
     ok -> ok;
-    {error,{already_started,App}} -> ok
+    {error, {already_started, App}} -> ok
   end.
 
--spec start(application:start_type(), term()) -> {error,any()} | {ok,pid()}.
-start(_StartType, _StartArgs) ->
+start_link() ->
   ensure_started(inets),
   ensure_started(crypto),
   ensure_started(asn1),
@@ -21,7 +20,22 @@ start(_StartType, _StartArgs) ->
   ensure_started(mochiweb),
   application:set_env(webmachine,webmachine_logger_module,webmachine_logger),
   ensure_started(webmachine),
-  server_sup:start_link().
+  wakako_sup:start_link().
+
+-spec start(application:start_type(), term()) -> {error,any()} | {ok,pid()}.
+start(_Type,_StartArgs) ->
+  ensure_started(inets),
+  ensure_started(crypto),
+  ensure_started(asn1),
+  ensure_started(public_key),
+  ensure_started(ssl),
+  ensure_started(xmerl),
+  ensure_started(compiler),
+  ensure_started(syntax_tools),
+  ensure_started(mochiweb),
+  application:set_env(webmachine,webmachine_logger_module,webmachine_logger),
+  ensure_started(webmachine),
+  wakako_sup:start_link().
 
 -spec stop(term()) -> ok.
 stop(_State) ->

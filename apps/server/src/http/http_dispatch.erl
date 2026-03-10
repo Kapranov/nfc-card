@@ -1,4 +1,4 @@
--module(dispatch).
+-module(http_dispatch).
 -author("Oleg G.Kapranov <lugatex@yahoo.com>").
 
 -behaviour(gen_server).

@@ -1,4 +1,4 @@
--module(webmachine).
+-module(http_cowboy).
 -author("Oleg G.Kapranov <lugatex@yahoo.com>").
 
 -behaviour(gen_server).
@@ -14,7 +14,7 @@
 
 start_link() ->
   {ok,Pid}=gen_server:start_link({local,?MODULE},?MODULE,[],[]),
-  io:format("WebMachine HTTP Server started with pid: ~p~n",[Pid]),
+  io:format("Cowboy HTTP Server started with pid: ~p~n",[Pid]),
   {ok,Pid}.
 
 init([]) -> {ok,[]}.

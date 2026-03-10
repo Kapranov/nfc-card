@@ -246,6 +246,30 @@ erl> maui_client:uuid().
 
 ### Erlang and Kafka
 
+
+```
+bash> cat /var/log/kafka/start-kafka.log
+bash> systemctl daemon-reload
+bash> systemctl reload kafka
+bash> /usr/bin/kafka-server-start.sh /etc/kafka/server.properties
+
+/usr/lib/systemd/system/kafka.service
+```
+
+
+```
+bash> sudo pacman -S kafka
+bash> KAFKA_CLUSTER_ID=$(kafka-storage.sh random-uuid)
+bash> sudo -u kafka kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c /etc/kafka/server.properties --standalone
+bash> sudo systemctl enable --now kafka.service
+bash> kafka-topics.sh --create --topic test-topic --bootstrap-server localhost:9092
+```
+
+```
+bash> sudo /usr/bin/kafka-server-start.sh /etc/kafka/server.properties
+bash> kafka-topics.sh --create --topic test-topic --bootstrap-server localhost:9092
+```
+
 Example of a configuration file (for `sys.config`):
 
 ```erlang
@@ -458,10 +482,36 @@ ServerFun = fun (Req) ->
     Headers = [{"Content-Type", "application/octet-stream"}],
     mochiweb_request:respond({201, Headers, Body}, Req)
 end.
+
+erl> #{<<"age">> => 22,<<"city">> => <<"New Jersey">>, <<"name">> => <<"Schamberger">>}
+erl> JsonString = <<"{\"name\": \"Bob\", \"age\": 25, \"isStudent\": false}">>.
+erl> jsx:decode(JsonString, [{return_maps, true}]).
+erl> io:format("~p~n", [JsonString]).
+erl> JsonString = <<"{\"user_id\": 123, \"username\": \"bob\"}">>.
+erl> DecodedData = jiffy:decode(JsonString, #{binary => true}).
+erl> io:format("Decoded Erlang Term: ~p~n", [DecodedData]).
+erl> jsx:decode(JsonString, [{return_maps, true}]).
+erl> Data = [#{id => 1, item => <<"Apple">>}, #{id => 2, item => <<"Banana">>}].
+erl> io:format("~s~n", [jsx:encode(Data)]).
+erl> Data = #{<<"name">> => <<"Alice">>,<<"age">> => 30,<<"is_student">> => false,<<"courses">> => [<<"Math">>, <<"Physics">>]}.
+erl> JsonString = jiffy:encode(Data).
+erl> io:format("Encoded JSON: ~s~n", [JsonString]).
+erl> Data = <<"{\"user_id\": 123, \"username\": \"bob\"}">>.
+erl> DecodedData = jiffy:decode(Data).
+erl> io:format("Decoded Erlang Term: ~p~n", [DecodedData]).
+
+erl> mochiweb_request:respond({201, Headers, Body}, Req)
 ```
 
 In the example above, `mochiweb_util:urlsplit_path/1` is used to separate
 the path from the query string for routing purposes.
+
+### RabbitMQ requires specific ports to be free.
+
+```
+bash> sudo lsof -i :15672
+bash> sudo lsof -i :4369
+```
 
 ### 30 Sep 2025 by Oleg G.Kapranov
 
@@ -502,3 +552,10 @@ the path from the query string for routing purposes.
 [35]: https://git.sr.ht/~fancycade/nine_cowboy/tree/main/item/src/nine_cowboy_mid.erl
 [36]: https://github.com/inaka/shotgun
 [37]: https://github.com/esl/fusco
+[40]: https://www.skybert.net/linux/kafka-fails-to-start/
+[41]: https://ipv6.rs/tutorial/Arch_Linux/ZooKeeper/
+[42]: https://linux-notes.org/ustanovka-zookeeper-v-unix-linux/
+[43]: https://www.atlantic.net/dedicated-server-hosting/how-to-install-apache-kafka-on-arch-linux/
+[44]: https://ssojet.com/serialize-and-deserialize/serialize-and-deserialize-json-in-erlang#encoding-erlang-data-to-json
+[45]: https://mojoauth.com/serialize-and-deserialize/serialize-and-deserialize-json-with-erlang#encoding-data-to-json
+[46]: https://markbucciarelli.com/posts/2017-01-04_how_to_return_json_from_an_erlang_web_service.html

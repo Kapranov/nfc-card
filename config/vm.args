@@ -1,6 +1,4 @@
 -sname nfc_card
-
 -setcookie nfc_card_cookie
-
 +K true
 +A30

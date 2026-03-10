@@ -1,15 +1,6 @@
-%%%-------------------------------------------------------------------
-%% @doc server top level supervisor.
-%% @end
-%%%-------------------------------------------------------------------
-
 -module(server_sup).
-
 -behaviour(supervisor).
-
--export([start_link/0]).
-
--export([init/1]).
+-export([init/1,start_link/0]).
 
 -define(SERVER,?MODULE).
 -define(CHILD(Id,Mod,Type,Args),{Id,{Mod,start_link,Args},transient,5000,Type,[Mod]}).
@@ -41,6 +32,13 @@ init([]) ->
          ,{username,RabbitUsername}
          ,{virtual_host,RabbitVirtualHost}
          ],
+  Web={webmachine_mochiweb
+      ,{webmachine_mochiweb,start,[http_webmachine_config:web_config()]}
+      ,permanent
+      ,5000
+      ,worker
+      ,[mochiweb_socket_server]
+      },
   ChildSpecs = ?CHILD(maui_server,
                       maui_server,
                       worker,
@@ -50,5 +48,5 @@ init([]) ->
                        RabbitType,
                        RabbitRoutingKey,
                        RabbitConsumer
-                      ]),
-  {ok,{{one_for_all,0,1},[ChildSpecs]}}.
+                      ]) ,
+  {ok,{{one_for_all,0,1},[ChildSpecs,Web]}}.

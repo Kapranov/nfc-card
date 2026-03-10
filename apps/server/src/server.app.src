@@ -3,7 +3,14 @@
   , {vsn,"0.1.0"}
   , {registered,[]}
   , {mod,{server_app,[]}}
-  , {applications,[kernel,stdlib,core]}
+  , {applications,[kernel,
+                   stdlib,
+                   inets,
+                   crypto,
+                   mochiweb,
+                   stdlib,
+                   webmachine
+                  ]}
   , {env,[{brokers,[{sedna
                     ,[{username,<<"guest">>}
                     , {password,<<"guest">>}
@@ -62,7 +69,9 @@
                     , {unknown_key,<<"unknown_key">>}
                     , {username,<<"guest">>}]}
                    ]
-          }
+          },
+          {web_ip,"0.0.0.0"},
+          {web_port,9090}
          ]
     }
   , {modules,[]}
