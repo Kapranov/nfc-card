@@ -1,13 +1,11 @@
--module(hanabusa).
--author("Oleg G.Kapranov <lugatex@yahoo.com>").
-
+-module(default_resource).
 -export([init/1,to_html/2]).
 
 -include_lib("webmachine/include/webmachine.hrl").
 
 -spec init(list()) -> {ok,term()}.
-init([]) -> {ok, undefined}.
+init([]) -> {ok,undefined}.
 
 -spec to_html(wrq:reqdata(),term()) -> {iodata(),wrq:reqdata(),term()}.
-to_html(ReqData, State) ->
-  {"<html><body>Hello, new world</body></html>",ReqData,State}.
+to_html(ReqData,State) ->
+  {"<html><body>The Honolulu Star-Advertiser</body></html>",ReqData,State}.

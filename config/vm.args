@@ -1,4 +1,5 @@
 -sname nfc_card
 -setcookie nfc_card_cookie
+-eval "sync:go()"
 +K true
 +A30
