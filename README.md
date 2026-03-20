@@ -501,6 +501,9 @@ erl> DecodedData = jiffy:decode(Data).
 erl> io:format("Decoded Erlang Term: ~p~n", [DecodedData]).
 
 erl> mochiweb_request:respond({201, Headers, Body}, Req)
+
+erl> httpc:request(get,{"http://127.0.0.1:9090/demo",[]},[],[]).
+erl> httpc:request(get,{"http://127.0.0.1:9090/kalihi/authdemo",[{"Authorization", "Basic " ++ base64:encode_to_string("waipahu:maui")}]},[],[]).
 ```
 
 In the example above, `mochiweb_util:urlsplit_path/1` is used to separate
@@ -559,3 +562,4 @@ bash> sudo lsof -i :4369
 [44]: https://ssojet.com/serialize-and-deserialize/serialize-and-deserialize-json-in-erlang#encoding-erlang-data-to-json
 [45]: https://mojoauth.com/serialize-and-deserialize/serialize-and-deserialize-json-with-erlang#encoding-data-to-json
 [46]: https://markbucciarelli.com/posts/2017-01-04_how_to_return_json_from_an_erlang_web_service.html
+[47]: https://stackoverflow.com/questions/1123589/how-to-use-mochijson-to-encode-data-structure-in-erlang

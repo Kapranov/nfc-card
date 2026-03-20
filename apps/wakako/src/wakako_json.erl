@@ -1,4 +1,5 @@
 -module(wakako_json).
+-author('Oleg G.Kapranov <lugatex@yahoo.com>').
 -export([from_json/1, from_json/2, to_json/1, to_json/2]).
 
 to_json(PropList) ->

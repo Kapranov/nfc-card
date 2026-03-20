@@ -1,11 +1,25 @@
 -module(default_resource).
--export([init/1,to_html/2]).
+-author('Oleg G.Kapranov <lugatex@yahoo.com>').
+-export([init/1]).
+-export([allowed_methods/2,content_types_provided/2,provide_content/2]).
 
 -include_lib("webmachine/include/webmachine.hrl").
 
 -spec init(list()) -> {ok,term()}.
 init([]) -> {ok,undefined}.
 
--spec to_html(wrq:reqdata(),term()) -> {iodata(),wrq:reqdata(),term()}.
-to_html(ReqData,State) ->
-  {"<html><body>The Honolulu Star-Advertiser</body></html>",ReqData,State}.
+allowed_methods(ReqData,State) ->
+  Methods=['GET'],
+  {Methods,ReqData,State}.
+
+content_types_provided(ReqData,State) ->
+  Types=[{"application/json",provide_content}],
+  {Types,ReqData,State}.
+
+provide_content(ReqData,State) ->
+  Content = #{"report" => <<"The Honolulu Star-Advertiser">>},
+  render_json(Content,ReqData,State).
+
+render_json(Content,ReqData,State) ->
+  Body = mochijson2:encode(Content),
+  {Body,ReqData,State}.

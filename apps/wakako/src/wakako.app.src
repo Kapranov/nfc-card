@@ -4,10 +4,10 @@
   {registered,[]},
   {mod,{wakako_app,[]}},
   {applications,[
-    kernel,
-    stdlib,
-    inets,
     crypto,
+    inets,
+    jsx,
+    kernel,
     mochiweb,
     stdlib,
     webmachine
