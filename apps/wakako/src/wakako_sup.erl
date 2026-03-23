@@ -1,7 +1,10 @@
 -module(wakako_sup).
 -author('Oleg G.Kapranov <lugatex@yahoo.com>').
 -behaviour(supervisor).
--export([init/1,start_link/0,update/0]).
+-export([init/1
+        ,start_link/0
+        ,update/0
+        ]).
 
 -define(SERVER,?MODULE).
 

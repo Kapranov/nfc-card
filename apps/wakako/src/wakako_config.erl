@@ -1,6 +1,8 @@
 -module(wakako_config).
 -author('Oleg G.Kapranov <lugatex@yahoo.com>').
--export([dispatch/0,web_config/0]).
+-export([dispatch/0
+        ,web_config/0
+        ]).
 
 -spec dispatch() -> [webmachine_dispatcher:route()].
 dispatch() ->

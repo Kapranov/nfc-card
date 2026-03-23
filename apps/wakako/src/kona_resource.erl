@@ -1,30 +1,15 @@
 -module(kona_resource).
 -author('Oleg G.Kapranov <lugatex@yahoo.com>').
--export([init/1]).
--export([allowed_methods/2,content_types_provided/2,provide_content/2,is_authorized/2]).
+-export([allowed_methods/2
+        ,content_types_provided/2
+        ,init/1
+        ,provide_content/2
+        ]).
 
 -include_lib("webmachine/include/webmachine.hrl").
 
 -spec init(list()) -> {ok,term()}.
 init([]) -> {ok,undefined}.
-
-is_authorized(ReqData, Context) ->
-  case wrq:disp_path(ReqData) of
-    "authdemo" ->
-      case wrq:get_req_header("authorization", ReqData) of
-        "Basic "++Base64 ->
-          Str = base64:mime_decode_to_string(Base64),
-          case string:tokens(Str, ":") of
-            ["authdemo", "demo1"] ->
-              {true, ReqData, Context};
-            _ ->
-              {"Basic realm=webmachine", ReqData, Context}
-          end;
-        _ ->
-          {"Basic realm=webmachine", ReqData, Context}
-      end;
-    _ -> {true, ReqData, Context}
-  end.
 
 allowed_methods(ReqData,State) ->
   Methods=['GET'],

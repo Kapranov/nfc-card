@@ -1,7 +1,13 @@
 -module(wakako_resource).
 -author('Oleg G.Kapranov <lugatex@yahoo.com>').
--export([init/1]).
--export([service_available/2,allowed_methods/2,content_types_provided/2,content_types_accepted/2,provide_content/2,accept_content/2]).
+-export([accept_content/2
+        ,allowed_methods/2
+        ,content_types_accepted/2
+        ,content_types_provided/2
+        ,init/1
+        ,provide_content/2
+        ,service_available/2
+        ]).
 
 -include_lib("webmachine/include/webmachine.hrl").
 

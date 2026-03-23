@@ -1,7 +1,11 @@
 -module(default_resource).
 -author('Oleg G.Kapranov <lugatex@yahoo.com>').
--export([init/1]).
--export([allowed_methods/2,content_types_provided/2,provide_content/2]).
+-export([allowed_methods/2
+        ,content_types_provided/2
+        ,generate_etag/2
+        ,init/1
+        ,provide_content/2
+        ]).
 
 -include_lib("webmachine/include/webmachine.hrl").
 
@@ -23,3 +27,6 @@ provide_content(ReqData,State) ->
 render_json(Content,ReqData,State) ->
   Body = mochijson2:encode(Content),
   {Body,ReqData,State}.
+
+generate_etag(ReqData,State) ->
+  {mochihex:to_hex(erlang:phash2(ReqData)),ReqData,State}.

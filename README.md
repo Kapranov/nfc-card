@@ -516,6 +516,14 @@ bash> sudo lsof -i :15672
 bash> sudo lsof -i :4369
 ```
 
+### Timestamp
+
+```
+erl> Now = {_,_,US} = os:timestamp().
+erl> {{Y,M,D},{H,I,S}} = calendar:now_to_universal_time(Now).
+erl> DayNumber = calendar:day_of_the_week({Y,M,D}).
+```
+
 ### 30 Sep 2025 by Oleg G.Kapranov
 
 [1]:  http://127.0.0.1:15672

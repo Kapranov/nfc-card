@@ -1,6 +1,11 @@
 -module(wakako_app).
+-author("Oleg G.Kapranov <lugatex@yahoo.com>").
 -behaviour(application).
--export([ensure_started/1,start_link/0,start/2,stop/1]).
+-export([ensure_started/1
+        ,start_link/0
+        ,start/2
+        ,stop/1
+        ]).
 
 ensure_started(App) ->
   case application:start(App) of
