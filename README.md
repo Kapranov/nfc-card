@@ -504,6 +504,8 @@ erl> mochiweb_request:respond({201, Headers, Body}, Req)
 
 erl> httpc:request(get,{"http://127.0.0.1:9090/demo",[]},[],[]).
 erl> httpc:request(get,{"http://127.0.0.1:9090/kalihi/authdemo",[{"Authorization", "Basic " ++ base64:encode_to_string("waipahu:maui")}]},[],[]).
+erl> httpc:request(get,{"http://127.0.0.1:9090/kokua/kona",[{"Authorization", "Basic " ++ base64:encode_to_string("waipahu:maui")}]},[],[]).
+erl> httpc:request(get,{"http://127.0.0.1:9090/kokua/kona",[]},[],[]).
 ```
 
 In the example above, `mochiweb_util:urlsplit_path/1` is used to separate
