@@ -2,12 +2,14 @@
 -author("Oleg G.Kapranov <lugatex@yahoo.com>").
 -export([ensure_started/1,start/0,start_link/0,stop/0]).
 
+-spec ensure_started(atom()) -> ok.
 ensure_started(App) ->
   case application:start(App) of
     ok -> ok;
     {error, {already_started, App}} -> ok
   end.
 
+-spec start_link() -> {ok,pid()}.
 start_link() ->
   ensure_started(inets),
   ensure_started(crypto),
@@ -20,6 +22,10 @@ start_link() ->
   ensure_started(mochiweb),
   application:set_env(webmachine,webmachine_logger_module,webmachine_logger),
   ensure_started(webmachine),
+  Dispatch = cowboy_router:compile([
+    {'_', [{"/", http_cowboy, []}]}
+  ]),
+  {ok, _} = cowboy:start_clear(my_http_listener,[{port, 8888}],#{env => #{dispatch => Dispatch}}),
   server_sup:start_link().
 
 -spec start() -> ok.
@@ -35,6 +41,10 @@ start() ->
   ensure_started(mochiweb),
   application:set_env(webmachine,webmachine_logger_module,webmachine_logger),
   ensure_started(webmachine),
+  Dispatch = cowboy_router:compile([
+    {'_', [{"/", http_cowboy, []}]}
+  ]),
+  {ok, _} = cowboy:start_clear(my_http_listener,[{port, 8888}],#{env => #{dispatch => Dispatch}}),
   application:start(server).
 
 -spec stop() -> ok.

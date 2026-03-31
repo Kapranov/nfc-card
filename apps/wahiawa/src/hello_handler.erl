@@ -1,5 +1,4 @@
--module(http_cowboy).
--author("Oleg G.Kapranov <lugatex@yahoo.com>").
+-module(hello_handler).
 -export([init/2,allowed_methods/2,content_types_provided/2,to_json/2]).
 
 init(Req,Opts) ->
@@ -12,5 +11,5 @@ content_types_provided(Req,State) ->
   {[{{<<"application">>,<<"json">>,[]},to_json}],Req,State}.
 
 to_json(Req, State) ->
-  Content = iolist_to_binary(jiffy:encode(#{column => <<"Trio of galaxies feeding supermassive black holes.">>})),
-  {Content,Req,State}.
+  Body = <<"{\"rest\": \"Hello World!\"}">>,
+  {Body, Req, State}.
