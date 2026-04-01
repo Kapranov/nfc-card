@@ -1,0 +1,16 @@
+{application,waialua,[
+  {description,"An OTP application"},
+  {vsn,"0.1.0"},
+  {registered,[]},
+  {mod,{waialua_app,[]}},
+  {applications, [
+    kernel,
+    stdlib,
+    brod,
+    jiffy
+  ]},
+  {env,[]},
+  {modules,[]},
+  {licenses,["Apache-2.0"]},
+  {links,[]}
+]}.
