@@ -39,6 +39,8 @@ init([]) ->
       ,worker
       ,[mochiweb_socket_server]
       },
+  KafkaClient={kaukonahua_client, {kaukonahua_client, start_link, []}, permanent, 10000, worker, [kaukonahua_client]},
+  KafkaConsume={kaukonahua_consume, {kaukonahua_consume, start_link, []}, permanent, 10000, worker, [kaukonahua_consume]},
   ChildSpecs = ?CHILD(maui_server,
                       maui_server,
                       worker,
@@ -49,4 +51,4 @@ init([]) ->
                        RabbitRoutingKey,
                        RabbitConsumer
                       ]) ,
-  {ok,{{one_for_all,0,1},[ChildSpecs,Web]}}.
+  {ok,{{one_for_all,0,1},[ChildSpecs,Web,KafkaClient,KafkaConsume]}}.

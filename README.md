@@ -518,6 +518,23 @@ bash> sudo lsof -i :15672
 bash> sudo lsof -i :4369
 ```
 
+### Kafka
+
+```
+erl> kaukonahua_publish:create_topic(<<"Aloha">>).
+erl> kaukonahua_publish:delete_topics("Aloha").
+erl> kaukonahua_publish:fetch([{"localhost",9092}],<<"test-topic">>,0,5).
+erl> kaukonahua_publish:get_consumer(client1,<<"test-topic">>,1).
+erl> kaukonahua_publish:get_consumer(client1,<<"news">>,1).
+erl> kaukonahua_publish:get_partitions_count(client1,<<"test-topic">>).
+erl> kaukonahua_publish:get_producer(client1,<<"test-topic">>,1).
+erl> kaukonahua_publish:list_all_groups([{"localhost",9092}],[]).
+erl> kaukonahua_publish:list_groups({"localhost",9092},[]).
+erl> Key = <<"news">>.
+erl> Content = <<"Hawaiian Electric warns of coming bill spike">>.
+erl> kaukonahua_publish:publish(Key,Content).
+```
+
 ### Timestamp
 
 ```

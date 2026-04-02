@@ -3,11 +3,13 @@
   , {vsn,"0.1.0"}
   , {registered,[]}
   , {mod,{server_app,[]}}
-  , {applications,[kernel,
-                   stdlib,
-                   inets,
+  , {applications,[brod,
                    crypto,
+                   inets,
+                   jiffy,
+                   kernel,
                    mochiweb,
+                   stdlib,
                    stdlib,
                    webmachine
                   ]}
