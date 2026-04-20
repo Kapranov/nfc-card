@@ -1447,3 +1447,1135 @@ Checking crc32cer
 /home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/waialua/src/waialua.erl
 /home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/waialua/src/waialua.erl
 /home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/waialua/src/waialua.erl
+Checking mochifmt
+Checking mochifmt_records
+Checking mochifmt_std
+Checking mochiglobal
+Checking mochihex
+Checking mochijson
+Checking mochijson2
+Checking mochilists
+Checking mochilogfile2
+Checking mochinum
+Checking mochitemp
+Checking mochiutf8
+Checking mochiweb
+Checking mochiweb_acceptor
+Checking mochiweb_base64url
+Checking mochiweb_charref
+Checking mochiweb_clock
+Checking mochiweb_cookies
+Checking mochiweb_cover
+Checking mochiweb_echo
+Checking mochiweb_headers
+Checking mochiweb_html
+Checking mochiweb_http
+Checking mochiweb_io
+Checking mochiweb_mime
+Checking mochiweb_multipart
+Checking mochiweb_request
+Checking mochiweb_response
+Checking mochiweb_session
+Checking mochiweb_socket
+Checking mochiweb_socket_server
+Checking mochiweb_util
+Checking mochiweb_websocket
+Checking reloader
+Checking sync
+Checking sync_notify
+Checking sync_options
+Checking sync_scanner
+Checking sync_utils
+Checking core_app
+Checking core_sup
+Checking sdp_query
+Checking mochiweb_acceptor
+Checking mochiweb_request
+Checking mochiweb_socket_server
+Checking backoff
+Checking mochifmt
+Checking mochifmt_records
+Checking mochifmt_std
+Checking mochiglobal
+Checking mochihex
+Checking mochijson
+Checking mochijson2
+Checking mochilists
+Checking mochilogfile2
+Checking mochinum
+Checking mochitemp
+Checking mochiutf8
+Checking mochiweb
+Checking mochiweb_acceptor
+Checking mochiweb_base64url
+Checking mochiweb_charref
+Checking mochiweb_clock
+Checking mochiweb_cookies
+Checking mochiweb_cover
+Checking mochiweb_echo
+Checking mochiweb_headers
+Checking mochiweb_html
+Checking mochiweb_http
+Checking mochiweb_io
+Checking mochiweb_mime
+Checking mochiweb_multipart
+Checking mochiweb_request
+Checking mochiweb_response
+Checking mochiweb_session
+Checking mochiweb_socket
+Checking mochiweb_socket_server
+Checking mochiweb_util
+Checking mochiweb_websocket
+Checking reloader
+Checking pg_array
+Checking pg_bit_string
+Checking pg_boolean
+Checking pg_circle
+Checking pg_date
+Checking pg_enum
+Checking pg_float4
+Checking pg_float8
+Checking pg_hstore
+Checking pg_inet
+Checking pg_int2
+Checking pg_int4
+Checking pg_int8
+Checking pg_interval
+Checking pg_json
+Checking pg_jsonb
+Checking pg_line
+Checking pg_line_segment
+Checking pg_macaddr
+Checking pg_math
+Checking pg_name
+Checking pg_numeric
+Checking pg_oid
+Checking pg_path
+Checking pg_point
+Checking pg_polygon
+Checking pg_range
+Checking pg_raw
+Checking pg_record
+Checking pg_tid
+Checking pg_time
+Checking pg_timestamp
+Checking pg_timestampz
+Checking pg_tsvector
+Checking pg_types
+Checking pg_uuid
+Checking pgo
+Checking pgo_app
+Checking pgo_connection
+Checking pgo_connection_starter
+Checking pgo_connection_sup
+Checking pgo_handler
+Checking pgo_pool
+Checking pgo_pool_sup
+Checking pgo_protocol
+Checking pgo_query_cache
+Checking pgo_sasl_prep_profile
+Checking pgo_scram
+Checking pgo_sup
+Checking pgo_type_server
+Checking sync
+Checking sync_notify
+Checking sync_options
+Checking sync_scanner
+Checking sync_utils
+Checking core_app
+Checking core_sup
+Checking sdp_query
+Checking mochiweb_socket_server
+Checking pg_polygon
+Checking pg_float8
+Checking mochiweb_acceptor
+Checking pg_numeric
+Checking mochiweb_request
+Checking pg_point
+Checking pg_int2
+Checking pgo_protocol
+Checking pgo_handler
+Checking pg_time
+Checking pg_record
+Checking pg_oid
+Checking pg_date
+Checking pg_uuid
+Checking pg_interval
+Checking pg_bit_string
+Checking pg_inet
+Checking pgo_connection
+Checking pgo_pool
+Checking pg_enum
+Checking pg_path
+Checking pgo
+Checking pg_line_segment
+Checking pg_tsvector
+Checking pg_json
+Checking pg_types
+Checking pgo_type_server
+Checking pg_raw
+Checking pg_array
+Checking pg_name
+Checking pg_boolean
+Checking pg_jsonb
+Checking pg_timestampz
+Checking pg_int8
+Checking pg_circle
+Checking pg_float4
+Checking pg_hstore
+Checking pg_tid
+Checking pg_range
+Checking pg_int4
+Checking pg_line
+Checking pg_timestamp
+Checking pg_macaddr
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+Checking backoff
+Checking mochifmt
+Checking mochifmt_records
+Checking mochifmt_std
+Checking mochiglobal
+Checking mochihex
+Checking mochijson
+Checking mochijson2
+Checking mochilists
+Checking mochilogfile2
+Checking mochinum
+Checking mochitemp
+Checking mochiutf8
+Checking mochiweb
+Checking mochiweb_acceptor
+Checking mochiweb_base64url
+Checking mochiweb_charref
+Checking mochiweb_clock
+Checking mochiweb_cookies
+Checking mochiweb_cover
+Checking mochiweb_echo
+Checking mochiweb_headers
+Checking mochiweb_html
+Checking mochiweb_http
+Checking mochiweb_io
+Checking mochiweb_mime
+Checking mochiweb_multipart
+Checking mochiweb_request
+Checking mochiweb_response
+Checking mochiweb_session
+Checking mochiweb_socket
+Checking mochiweb_socket_server
+Checking mochiweb_util
+Checking mochiweb_websocket
+Checking reloader
+Checking pg_array
+Checking pg_bit_string
+Checking pg_boolean
+Checking pg_circle
+Checking pg_date
+Checking pg_enum
+Checking pg_float4
+Checking pg_float8
+Checking pg_hstore
+Checking pg_inet
+Checking pg_int2
+Checking pg_int4
+Checking pg_int8
+Checking pg_interval
+Checking pg_json
+Checking pg_jsonb
+Checking pg_line
+Checking pg_line_segment
+Checking pg_macaddr
+Checking pg_math
+Checking pg_name
+Checking pg_numeric
+Checking pg_oid
+Checking pg_path
+Checking pg_point
+Checking pg_polygon
+Checking pg_range
+Checking pg_raw
+Checking pg_record
+Checking pg_tid
+Checking pg_time
+Checking pg_timestamp
+Checking pg_timestampz
+Checking pg_tsvector
+Checking pg_types
+Checking pg_uuid
+Checking pgo
+Checking pgo_app
+Checking pgo_connection
+Checking pgo_connection_starter
+Checking pgo_connection_sup
+Checking pgo_handler
+Checking pgo_pool
+Checking pgo_pool_sup
+Checking pgo_protocol
+Checking pgo_query_cache
+Checking pgo_sasl_prep_profile
+Checking pgo_scram
+Checking pgo_sup
+Checking pgo_type_server
+Checking sync
+Checking sync_notify
+Checking sync_options
+Checking sync_scanner
+Checking sync_utils
+Checking core_app
+Checking core_sup
+Checking sdp_query
+Checking mochiweb_socket_server
+Checking pg_polygon
+Checking pg_float8
+Checking mochiweb_acceptor
+Checking pg_numeric
+Checking mochiweb_request
+Checking pg_point
+Checking pg_int2
+Checking pgo_protocol
+Checking pgo_handler
+Checking pg_time
+Checking pg_record
+Checking pg_oid
+Checking pg_date
+Checking pg_uuid
+Checking pg_interval
+Checking pg_bit_string
+Checking pg_inet
+Checking pgo_connection
+Checking pgo_pool
+Checking pg_enum
+Checking pg_path
+Checking pgo
+Checking pg_line_segment
+Checking pg_tsvector
+Checking pg_json
+Checking pg_types
+Checking pgo_type_server
+Checking pg_raw
+Checking pg_array
+Checking pg_name
+Checking pg_boolean
+Checking pg_jsonb
+Checking pg_timestampz
+Checking pg_int8
+Checking pg_circle
+Checking pg_float4
+Checking pg_hstore
+Checking pg_tid
+Checking pg_range
+Checking pg_int4
+Checking pg_line
+Checking pg_timestamp
+Checking pg_macaddr
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+Checking backoff
+Checking mochifmt
+Checking mochifmt_records
+Checking mochifmt_std
+Checking mochiglobal
+Checking mochihex
+Checking mochijson
+Checking mochijson2
+Checking mochilists
+Checking mochilogfile2
+Checking mochinum
+Checking mochitemp
+Checking mochiutf8
+Checking mochiweb
+Checking mochiweb_acceptor
+Checking mochiweb_base64url
+Checking mochiweb_charref
+Checking mochiweb_clock
+Checking mochiweb_cookies
+Checking mochiweb_cover
+Checking mochiweb_echo
+Checking mochiweb_headers
+Checking mochiweb_html
+Checking mochiweb_http
+Checking mochiweb_io
+Checking mochiweb_mime
+Checking mochiweb_multipart
+Checking mochiweb_request
+Checking mochiweb_response
+Checking mochiweb_session
+Checking mochiweb_socket
+Checking mochiweb_socket_server
+Checking mochiweb_util
+Checking mochiweb_websocket
+Checking reloader
+Checking pg_array
+Checking pg_bit_string
+Checking pg_boolean
+Checking pg_circle
+Checking pg_date
+Checking pg_enum
+Checking pg_float4
+Checking pg_float8
+Checking pg_hstore
+Checking pg_inet
+Checking pg_int2
+Checking pg_int4
+Checking pg_int8
+Checking pg_interval
+Checking pg_json
+Checking pg_jsonb
+Checking pg_line
+Checking pg_line_segment
+Checking pg_macaddr
+Checking pg_math
+Checking pg_name
+Checking pg_numeric
+Checking pg_oid
+Checking pg_path
+Checking pg_point
+Checking pg_polygon
+Checking pg_range
+Checking pg_raw
+Checking pg_record
+Checking pg_tid
+Checking pg_time
+Checking pg_timestamp
+Checking pg_timestampz
+Checking pg_tsvector
+Checking pg_types
+Checking pg_uuid
+Checking pgo
+Checking pgo_app
+Checking pgo_connection
+Checking pgo_connection_starter
+Checking pgo_connection_sup
+Checking pgo_handler
+Checking pgo_pool
+Checking pgo_pool_sup
+Checking pgo_protocol
+Checking pgo_query_cache
+Checking pgo_sasl_prep_profile
+Checking pgo_scram
+Checking pgo_sup
+Checking pgo_type_server
+Checking sync
+Checking sync_notify
+Checking sync_options
+Checking sync_scanner
+Checking sync_utils
+Checking core_app
+Checking core_sup
+Checking sdp_query
+Checking mochiweb_socket_server
+Checking pg_polygon
+Checking pg_float8
+Checking mochiweb_acceptor
+Checking pg_numeric
+Checking mochiweb_request
+Checking pg_point
+Checking pg_int2
+Checking pgo_protocol
+Checking pgo_handler
+Checking pg_time
+Checking pg_record
+Checking pg_oid
+Checking pg_date
+Checking pg_uuid
+Checking pg_interval
+Checking pg_bit_string
+Checking pg_inet
+Checking pgo_connection
+Checking pgo_pool
+Checking pg_enum
+Checking pg_path
+Checking pgo
+Checking pg_line_segment
+Checking pg_tsvector
+Checking pg_json
+Checking pg_types
+Checking pgo_type_server
+Checking pg_raw
+Checking pg_array
+Checking pg_name
+Checking pg_boolean
+Checking pg_jsonb
+Checking pg_timestampz
+Checking pg_int8
+Checking pg_circle
+Checking pg_float4
+Checking pg_hstore
+Checking pg_tid
+Checking pg_range
+Checking pg_int4
+Checking pg_line
+Checking pg_timestamp
+Checking pg_macaddr
+Checking opentelemetry
+Checking otel_attributes
+Checking otel_baggage
+Checking otel_ctx
+Checking otel_propagator
+Checking otel_propagator_b3
+Checking otel_propagator_b3multi
+Checking otel_propagator_b3single
+Checking otel_propagator_baggage
+Checking otel_propagator_text_map
+Checking otel_propagator_text_map_composite
+Checking otel_propagator_text_map_noop
+Checking otel_propagator_trace_context
+Checking otel_span
+Checking otel_tracer
+Checking otel_tracer_noop
+Checking otel_tracer_provider
+Checking otel_tracestate
+Checking otel_utils
+Checking opentelemetry
+Checking otel_baggage
+Checking otel_propagator_b3
+Checking otel_propagator_b3multi
+Checking otel_propagator_b3single
+Checking otel_propagator_baggage
+Checking otel_propagator_trace_context
+Checking otel_span
+Checking otel_tracer
+Checking otel_tracer_noop
+Checking otel_tracer_provider
+Checking pgo
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+Checking backoff
+Checking mochifmt
+Checking mochifmt_records
+Checking mochifmt_std
+Checking mochiglobal
+Checking mochihex
+Checking mochijson
+Checking mochijson2
+Checking mochilists
+Checking mochilogfile2
+Checking mochinum
+Checking mochitemp
+Checking mochiutf8
+Checking mochiweb
+Checking mochiweb_acceptor
+Checking mochiweb_base64url
+Checking mochiweb_charref
+Checking mochiweb_clock
+Checking mochiweb_cookies
+Checking mochiweb_cover
+Checking mochiweb_echo
+Checking mochiweb_headers
+Checking mochiweb_html
+Checking mochiweb_http
+Checking mochiweb_io
+Checking mochiweb_mime
+Checking mochiweb_multipart
+Checking mochiweb_request
+Checking mochiweb_response
+Checking mochiweb_session
+Checking mochiweb_socket
+Checking mochiweb_socket_server
+Checking mochiweb_util
+Checking mochiweb_websocket
+Checking reloader
+Checking pg_array
+Checking pg_bit_string
+Checking pg_boolean
+Checking pg_circle
+Checking pg_date
+Checking pg_enum
+Checking pg_float4
+Checking pg_float8
+Checking pg_hstore
+Checking pg_inet
+Checking pg_int2
+Checking pg_int4
+Checking pg_int8
+Checking pg_interval
+Checking pg_json
+Checking pg_jsonb
+Checking pg_line
+Checking pg_line_segment
+Checking pg_macaddr
+Checking pg_math
+Checking pg_name
+Checking pg_numeric
+Checking pg_oid
+Checking pg_path
+Checking pg_point
+Checking pg_polygon
+Checking pg_range
+Checking pg_raw
+Checking pg_record
+Checking pg_tid
+Checking pg_time
+Checking pg_timestamp
+Checking pg_timestampz
+Checking pg_tsvector
+Checking pg_types
+Checking pg_uuid
+Checking pgo
+Checking pgo_app
+Checking pgo_connection
+Checking pgo_connection_starter
+Checking pgo_connection_sup
+Checking pgo_handler
+Checking pgo_pool
+Checking pgo_pool_sup
+Checking pgo_protocol
+Checking pgo_query_cache
+Checking pgo_sasl_prep_profile
+Checking pgo_scram
+Checking pgo_sup
+Checking pgo_type_server
+Checking sync
+Checking sync_notify
+Checking sync_options
+Checking sync_scanner
+Checking sync_utils
+Checking core_app
+Checking core_sup
+Checking sdp_query
+Checking mochiweb_socket_server
+Checking pg_polygon
+Checking pg_float8
+Checking mochiweb_acceptor
+Checking pg_numeric
+Checking mochiweb_request
+Checking pg_point
+Checking pg_int2
+Checking pgo_protocol
+Checking pgo_handler
+Checking pg_time
+Checking pg_record
+Checking pg_oid
+Checking pg_date
+Checking pg_uuid
+Checking pg_interval
+Checking pg_bit_string
+Checking pg_inet
+Checking pgo_connection
+Checking pgo_pool
+Checking pg_enum
+Checking pg_path
+Checking pgo
+Checking pg_line_segment
+Checking pg_tsvector
+Checking pg_json
+Checking pg_types
+Checking pgo_type_server
+Checking pg_raw
+Checking pg_array
+Checking pg_name
+Checking pg_boolean
+Checking pg_jsonb
+Checking pg_timestampz
+Checking pg_int8
+Checking pg_circle
+Checking pg_float4
+Checking pg_hstore
+Checking pg_tid
+Checking pg_range
+Checking pg_int4
+Checking pg_line
+Checking pg_timestamp
+Checking pg_macaddr
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+Checking opentelemetry
+Checking otel_baggage
+Checking otel_propagator_b3
+Checking otel_propagator_b3multi
+Checking otel_propagator_b3single
+Checking otel_propagator_baggage
+Checking otel_propagator_trace_context
+Checking otel_span
+Checking otel_tracer
+Checking otel_tracer_noop
+Checking otel_tracer_provider
+Checking pgo
+Checking opentelemetry
+Checking otel_attributes
+Checking otel_baggage
+Checking otel_ctx
+Checking otel_propagator
+Checking otel_propagator_b3
+Checking otel_propagator_b3multi
+Checking otel_propagator_b3single
+Checking otel_propagator_baggage
+Checking otel_propagator_text_map
+Checking otel_propagator_text_map_composite
+Checking otel_propagator_text_map_noop
+Checking otel_propagator_trace_context
+Checking otel_span
+Checking otel_tracer
+Checking otel_tracer_noop
+Checking otel_tracer_provider
+Checking otel_tracestate
+Checking otel_utils
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+Checking backoff
+Checking mochifmt
+Checking mochifmt_records
+Checking mochifmt_std
+Checking mochiglobal
+Checking mochihex
+Checking mochijson
+Checking mochijson2
+Checking mochilists
+Checking mochilogfile2
+Checking mochinum
+Checking mochitemp
+Checking mochiutf8
+Checking mochiweb
+Checking mochiweb_acceptor
+Checking mochiweb_base64url
+Checking mochiweb_charref
+Checking mochiweb_clock
+Checking mochiweb_cookies
+Checking mochiweb_cover
+Checking mochiweb_echo
+Checking mochiweb_headers
+Checking mochiweb_html
+Checking mochiweb_http
+Checking mochiweb_io
+Checking mochiweb_mime
+Checking mochiweb_multipart
+Checking mochiweb_request
+Checking mochiweb_response
+Checking mochiweb_session
+Checking mochiweb_socket
+Checking mochiweb_socket_server
+Checking mochiweb_util
+Checking mochiweb_websocket
+Checking reloader
+Checking pg_array
+Checking pg_bit_string
+Checking pg_boolean
+Checking pg_circle
+Checking pg_date
+Checking pg_enum
+Checking pg_float4
+Checking pg_float8
+Checking pg_hstore
+Checking pg_inet
+Checking pg_int2
+Checking pg_int4
+Checking pg_int8
+Checking pg_interval
+Checking pg_json
+Checking pg_jsonb
+Checking pg_line
+Checking pg_line_segment
+Checking pg_macaddr
+Checking pg_math
+Checking pg_name
+Checking pg_numeric
+Checking pg_oid
+Checking pg_path
+Checking pg_point
+Checking pg_polygon
+Checking pg_range
+Checking pg_raw
+Checking pg_record
+Checking pg_tid
+Checking pg_time
+Checking pg_timestamp
+Checking pg_timestampz
+Checking pg_tsvector
+Checking pg_types
+Checking pg_uuid
+Checking pgo
+Checking pgo_app
+Checking pgo_connection
+Checking pgo_connection_starter
+Checking pgo_connection_sup
+Checking pgo_handler
+Checking pgo_pool
+Checking pgo_pool_sup
+Checking pgo_protocol
+Checking pgo_query_cache
+Checking pgo_sasl_prep_profile
+Checking pgo_scram
+Checking pgo_sup
+Checking pgo_type_server
+Checking sync
+Checking sync_notify
+Checking sync_options
+Checking sync_scanner
+Checking sync_utils
+Checking core_app
+Checking core_sup
+Checking sdp_query
+Checking mochiweb_socket_server
+Checking pg_polygon
+Checking pg_float8
+Checking mochiweb_acceptor
+Checking pg_numeric
+Checking mochiweb_request
+Checking pg_point
+Checking pg_int2
+Checking pgo_protocol
+Checking pgo_handler
+Checking pg_time
+Checking pg_record
+Checking pg_oid
+Checking pg_date
+Checking pg_uuid
+Checking pg_interval
+Checking pg_bit_string
+Checking pg_inet
+Checking pgo_connection
+Checking pgo_pool
+Checking pg_enum
+Checking pg_path
+Checking pgo
+Checking pg_line_segment
+Checking pg_tsvector
+Checking pg_json
+Checking pg_types
+Checking pgo_type_server
+Checking pg_raw
+Checking pg_array
+Checking pg_name
+Checking pg_boolean
+Checking pg_jsonb
+Checking pg_timestampz
+Checking pg_int8
+Checking pg_circle
+Checking pg_float4
+Checking pg_hstore
+Checking pg_tid
+Checking pg_range
+Checking pg_int4
+Checking pg_line
+Checking pg_timestamp
+Checking pg_macaddr
+Checking opentelemetry
+Checking otel_attributes
+Checking otel_baggage
+Checking otel_ctx
+Checking otel_propagator
+Checking otel_propagator_b3
+Checking otel_propagator_b3multi
+Checking otel_propagator_b3single
+Checking otel_propagator_baggage
+Checking otel_propagator_text_map
+Checking otel_propagator_text_map_composite
+Checking otel_propagator_text_map_noop
+Checking otel_propagator_trace_context
+Checking otel_span
+Checking otel_tracer
+Checking otel_tracer_noop
+Checking otel_tracer_provider
+Checking otel_tracestate
+Checking otel_utils
+Checking opentelemetry
+Checking otel_baggage
+Checking otel_propagator_b3
+Checking otel_propagator_b3multi
+Checking otel_propagator_b3single
+Checking otel_propagator_baggage
+Checking otel_propagator_trace_context
+Checking otel_span
+Checking otel_tracer
+Checking otel_tracer_noop
+Checking otel_tracer_provider
+Checking pgo
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+Checking jiffy
+Checking jiffy_utf8
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+Checking backoff
+Checking mochifmt
+Checking mochifmt_records
+Checking mochifmt_std
+Checking mochiglobal
+Checking mochihex
+Checking mochijson
+Checking mochijson2
+Checking mochilists
+Checking mochilogfile2
+Checking mochinum
+Checking mochitemp
+Checking mochiutf8
+Checking mochiweb
+Checking mochiweb_acceptor
+Checking mochiweb_base64url
+Checking mochiweb_charref
+Checking mochiweb_clock
+Checking mochiweb_cookies
+Checking mochiweb_cover
+Checking mochiweb_echo
+Checking mochiweb_headers
+Checking mochiweb_html
+Checking mochiweb_http
+Checking mochiweb_io
+Checking mochiweb_mime
+Checking mochiweb_multipart
+Checking mochiweb_request
+Checking mochiweb_response
+Checking mochiweb_session
+Checking mochiweb_socket
+Checking mochiweb_socket_server
+Checking mochiweb_util
+Checking mochiweb_websocket
+Checking reloader
+Checking pg_array
+Checking pg_bit_string
+Checking pg_boolean
+Checking pg_circle
+Checking pg_date
+Checking pg_enum
+Checking pg_float4
+Checking pg_float8
+Checking pg_hstore
+Checking pg_inet
+Checking pg_int2
+Checking pg_int4
+Checking pg_int8
+Checking pg_interval
+Checking pg_json
+Checking pg_jsonb
+Checking pg_line
+Checking pg_line_segment
+Checking pg_macaddr
+Checking pg_math
+Checking pg_name
+Checking pg_numeric
+Checking pg_oid
+Checking pg_path
+Checking pg_point
+Checking pg_polygon
+Checking pg_range
+Checking pg_raw
+Checking pg_record
+Checking pg_tid
+Checking pg_time
+Checking pg_timestamp
+Checking pg_timestampz
+Checking pg_tsvector
+Checking pg_types
+Checking pg_uuid
+Checking pgo
+Checking pgo_app
+Checking pgo_connection
+Checking pgo_connection_starter
+Checking pgo_connection_sup
+Checking pgo_handler
+Checking pgo_pool
+Checking pgo_pool_sup
+Checking pgo_protocol
+Checking pgo_query_cache
+Checking pgo_sasl_prep_profile
+Checking pgo_scram
+Checking pgo_sup
+Checking pgo_type_server
+Checking sync
+Checking sync_notify
+Checking sync_options
+Checking sync_scanner
+Checking sync_utils
+Checking core_app
+Checking core_sup
+Checking sdp_query
+Checking mochiweb_socket_server
+Checking pg_polygon
+Checking pg_float8
+Checking mochiweb_acceptor
+Checking pg_numeric
+Checking mochiweb_request
+Checking pg_point
+Checking pg_int2
+Checking pgo_protocol
+Checking pgo_handler
+Checking pg_time
+Checking pg_record
+Checking pg_oid
+Checking pg_date
+Checking pg_uuid
+Checking pg_interval
+Checking pg_bit_string
+Checking pg_inet
+Checking pgo_connection
+Checking pgo_pool
+Checking pg_enum
+Checking pg_path
+Checking pgo
+Checking pg_line_segment
+Checking pg_tsvector
+Checking pg_json
+Checking pg_types
+Checking pgo_type_server
+Checking pg_raw
+Checking pg_array
+Checking pg_name
+Checking pg_boolean
+Checking pg_jsonb
+Checking pg_timestampz
+Checking pg_int8
+Checking pg_circle
+Checking pg_float4
+Checking pg_hstore
+Checking pg_tid
+Checking pg_range
+Checking pg_int4
+Checking pg_line
+Checking pg_timestamp
+Checking pg_macaddr
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl
+/home/kapranov/Projects/bin/erlang-projects/nfc_card/apps/core/src/sdp_query.erl

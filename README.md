@@ -543,6 +543,43 @@ erl> {{Y,M,D},{H,I,S}} = calendar:now_to_universal_time(Now).
 erl> DayNumber = calendar:day_of_the_week({Y,M,D}).
 ```
 
+### PostgreySQL
+
+```
+erl> sdp_query:create_users("lugatex@yahoo.com","qwerty").
+erl> sdp_query:update_users(1).
+erl> sdp_query:show_users(1).
+erl> sdp_query:drop_users().
+```
+
+### Datetime
+```
+erl> Now = calendar:universal_time(),
+erl> epgsql:equery(_Conn, "INSERT INTO users (fname, created_at) VALUES ($1, $2)", [<<"Name">>, Now]).
+
+erl> SystemTime = os:system_time(millisecond),
+erl> DateTime = calendar:system_time_to_universal_time(SystemTime, millisecond).
+
+erl> Timestamp = {1568, 869478, 181646},
+erl> {{Year, Month, Day}, {Hour, Minute, Second}} = calendar:now_to_datetime(Timestamp).
+
+%%% UTC Datetime
+erl> {Mega, Sec, Micro} = calendar:now_to_datetime/1
+
+%%% Local Datetime
+erl> {Mega, Sec, Micro} = calendar:now_to_local_time/1
+
+%%% UTC Datetime
+erl> Integer (Unix) = calendar:system_time_to_universal_time/2
+
+%%% Local Datetime
+erl> Integer (Unix) = calendar:system_time_to_local_time/2
+
+%%% String (ISO 8601)
+erl> Integer (Unix) = calendar:system_time_to_rfc3339/2
+erl> {Mega1, Sec1, Micro1} = {Timestamp div 1000000000000, Timestamp div 1000000 rem 1000000, Timestamp rem 1000000}.
+```
+
 ### 30 Sep 2025 by Oleg G.Kapranov
 
 [1]:  http://127.0.0.1:15672

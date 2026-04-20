@@ -19,9 +19,14 @@
 
 -record(consumer_state, {}).
 
+-spec start_link() -> {ok,pid()} | ignore | {error,{already_started,pid()}}.
 start_link() ->
   gen_server:start_link({local,?SERVER},?MODULE,[],[]).
 
+-spec init(list()) -> {ok,map()} |
+                     {ok,map(),non_neg_integer} |
+                     ignore |
+                     {stop,atom()}.
 init([]) ->
   Topic = <<"test-topic">>,
   GroupConfig = [
@@ -40,6 +45,9 @@ init([]) ->
     _CallbackInitArg=[]
   ),
   {ok,#consumer_state{}}.
+-spec init(any(),any()) -> {ok,list()} |
+                     ignore |
+                     {stop,atom()}.
 init(_GroupId,_Opts) -> {ok,[]}.
 
 handle_message(_Topic,_Partition,Message,State) ->
