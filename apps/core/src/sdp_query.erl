@@ -1,6 +1,6 @@
 -module(sdp_query).
 -export([get/1,get/2,run/2]).
--export([create_users/2,drop_users/0,update_users/1,show_users/1]).
+-export([create_users/2,drop_users/0,update_users/2,show_users/1]).
 
 -record(users,{id,email,pass,fname,lname,active,created_at,updated_at,deleted_at}).
 
@@ -37,14 +37,65 @@ create_users(Email,Pass) ->
       {ok, "created table users"}
   end.
 
--spec update_users(integer()) -> {atom(), string()}.
-update_users(UserId) ->
-  case pgo:query("update users set active = true where id = $1::integer",[UserId]) of
-    #{command := update,rows := [],num_rows := 0} ->
-      {ok, "updated without changes"};
-    #{command := update,rows := [],num_rows := 1} ->
-      {ok,"updated table users"}
+-spec update_users(integer(),list()) -> {atom(), string()}.
+update_users(UserId,UsersParam) ->
+  %Email = proplists:get_value(Email,UsersParam.,
+  %Pass = proplists:get_value(pass,UsersParam),
+  %Fname = proplists:get_value(fname,UsersParam),
+  %Lname = proplists:get_value(lname,UsersParam),
+  %Active = proplists:get_value(active,UsersParam),
+  %CreatedAt = proplists:get_value(created_at,UsersParam),
+  %UpdatedAt = proplists:get_value(updated_at,UsersParam),
+  %DeletedAt = proplists:get_value(deleted_at,UsersParam),
+  UserList = [proplists:get_value(F,UsersParam) || F <- [email,pass,fname,lname,active]],
+  [Email,Pass,Fname,Lname,Active] = UserList,
+  case Email of
+    undefined ->
+      case Pass of
+        undefined ->
+          case Fname of
+            undefined ->
+              case Lname of
+                undefined ->
+                  case Active of
+                    undefined ->
+                      {ok, "without updated"};
+                    _ ->
+                      pgo:query("update users set active = $2::boolean where id = $1::integer",[UserId,Active])
+                  end;
+                _ -> ok
+              end;
+            _ -> ok
+          end;
+        _ -> ok
+      end;
+    _ ->
+      case Pass of
+        undefined ->
+          case Fname of
+            undefined ->
+              case Lname of
+                undefined ->
+                  case Active of
+                    undefined ->
+                      {ok, "without updated"};
+                    _ ->
+                      pgo:query("update users set email = $3, active = $2  where id = $1::integer",[UserId,Active,Email])
+                  end;
+                _ -> ok
+              end;
+            _ -> ok
+          end;
+        _ ->
+          ok
+      end
   end.
+%  case pgo:query("update users set active = true where id = $1::integer",[UserId]) of
+%    #{command := update,rows := [],num_rows := 0} ->
+%      {ok, "updated without changes"};
+%    #{command := update,rows := [],num_rows := 1} ->
+%      {ok,"updated table users"}
+%  end.
 
 -spec show_users(integer()) -> {atom(), string() | map()}.
 show_users(UserId) ->
