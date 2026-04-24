@@ -59,15 +59,58 @@ update_users(UserId,UsersParam) ->
                 undefined ->
                   case Active of
                     undefined ->
-                      {ok, "without updated"};
-                    _ ->
-                      pgo:query("update users set active = $2::boolean where id = $1::integer",[UserId,Active])
+                      {ok, "without updated, params are undefined"};
+                    _ -> pgo:query("update users set active = $2::boolean where id = $1::integer",[UserId,Active])
                   end;
-                _ -> ok
+                _ ->
+                  case Active of
+                    undefined -> pgo:query("update users set lname = $2::string where id = $1::integer",[UserId,Lname]);
+                    _ -> pgo:query("update users set lname = $3::string, active = $2::boolean where id = $1::integer",[UserId,Active,Lname])
+                  end
               end;
-            _ -> ok
+            _ ->
+              case Lname of
+                undefined ->
+                  case Active of
+                    undefined -> pgo:query("update users set fname = $2::string where id = $1::integer",[UserId,Fname]);
+                    _ -> pgo:query("update users set fname = $3::string, active = $2::boolean where id = $1::integer",[UserId,Active,Fname])
+                  end;
+                _ ->
+                  case Active of
+                    undefined -> pgo:query("update users set fname = $3::string, lname = $2::string where id = $1::integer",[UserId,Lname,Fname]);
+                    _ -> pgo:query("update users set fname = $4::string, lname = $3::string, active = $2::boolean where id = $1::integer",[UserId,Active,Lname,Fname])
+                  end
+              end
           end;
-        _ -> ok
+        _ ->
+          case Fname of
+            undefined ->
+              case Lname of
+                undefined ->
+                  case Active of
+                    undefined -> pgo:query("update users set pass = $2::string where id = $1::integer",[UserId,Pass]);
+                    _ -> pgo:query("update users set pass = $3::string, active = $2::boolean where id = $1::integer",[UserId,Active,Pass])
+                  end;
+                _ ->
+                  case Active of
+                    undefined -> pgo:query("update users set pass = $3::string, lname = $2::string where id = $1::integer",[UserId,Lname,Pass]);
+                    _ -> pgo:query("update users set pass = $4::string, lname = $3::string, active = $2::boolean where id = $1::integer",[UserId,Active,Lname,Pass])
+                  end
+              end;
+            _ ->
+              case Lname of
+                undefined ->
+                  case Active of
+                    undefined -> pgo:query("update users set pass = $3::string, fname = $2::string where id = $1::integer",[UserId,Fname,Pass]);
+                    _ -> pgo:query("update users set pass = $4::string, fname = $3::string, active = $2::boolean where id = $1::integer",[UserId,Active,Fname,Pass])
+                  end;
+                _ ->
+                  case Active of
+                    undefined -> pgo:query("update users set pass = $4::string, fname = $3::string, lname = $2::string where id = $1::integer",[UserId,Lname,Fname,Pass]);
+                    _ -> pgo:query("update users set pass = $5::string, fname = $4::string, lname = $3::string, active = $2::boolean where id = $1::integer",[UserId,Active,Lname,Fname,Pass])
+                  end
+              end
+          end
       end;
     _ ->
       case Pass of
@@ -77,17 +120,62 @@ update_users(UserId,UsersParam) ->
               case Lname of
                 undefined ->
                   case Active of
-                    undefined ->
-                      {ok, "without updated"};
-                    _ ->
-                      pgo:query("update users set email = $3, active = $2  where id = $1::integer",[UserId,Active,Email])
+                    undefined -> pgo:query("update users set email = $2 where id = $1::integer",[UserId,Email]);
+                    _ -> pgo:query("update users set email = $3, active = $2  where id = $1::integer",[UserId,Active,Email])
                   end;
-                _ -> ok
+                _ ->
+                  case Active of
+                    undefined -> pgo:query("update users set email = $3::string, lname = $2::string where id = $1::integer",[UserId,Lname,Email]);
+                    _ -> pgo:query("update users set email = $4::string, lname = $3::string, active = $2::boolean where id = $1::integer",[UserId,Active,Lname,Email])
+                  end
               end;
-            _ -> ok
+            _ ->
+              case Lname of
+                undefined ->
+                  case Active of
+                    undefined -> pgo:query("update users set email = $3::string, fname = $2::string where id = $1::integer",[UserId,Fname,Email]);
+                    _ -> pgo:query("update users set email = $4::string, fname = $3::string, active = $2::boolean where id = $1::integer",[UserId,Active,Fname,Email])
+                  end;
+                _ ->
+                  case Active of
+                    undefined -> pgo:query("update users set email = $4::string, fname = $3::string, lname = $2::string where id = $1::integer",[UserId,Lname,Fname,Email]);
+                    _ -> pgo:query("update users set email = $5::string, fname = $4::string, lname = $3::string, active = $2:: boolean where id = $1::integer",[UserId,Active,Lname,Fname,Email])
+                  end
+              end
           end;
         _ ->
-          ok
+          case Fname of
+            undefined ->
+              case Lname of
+                undefined ->
+                  case Active of
+                    undefined -> pgo:query("update users set email = $3::string, pass = $2::string where id = $1::integer",[UserId,Pass,Email]);
+                    _ -> pgo:query("update users set email = $4::string, pass = $3::string, active = $2::boolean where id = $1::integer",[UserId,Active,Pass,Email])
+                  end;
+                _ ->
+                  case Active of
+                    undefined -> pgo:query("update users set email = $4::string, pass = $3::string, lname = $2::string where id = $1::integer",[UserId,Lname,Pass,Email]);
+                    _ -> pgo:query("update users set email = $5::string, pass = $4::string, lname = $3::string, active = $2::boolean where id = $1::integer",[UserId,Active,Lname,Pass,Email])
+                  end
+              end;
+            _ ->
+              case Lname of
+                undefined ->
+                  case Active of
+                    undefined ->
+                      pgo:query("update users set email = $4::string, pass = $3::string, fname = $2:string where id = $1::integer",[UserId,Fname,Pass,Email]);
+                    _ ->
+                      pgo:query("update users set email = $5::string, pass = $4::string, fname = $3:string, active = $2::boolean where id = $1::integer",[UserId,Active,Fname,Pass,Email])
+                  end;
+                _ ->
+                  case Active of
+                    undefined ->
+                      pgo:query("update users set email = $5::string, pass = $4::string, fname = $3:string, lname = $2::string where id = $1::integer",[UserId,Lname,Fname,Pass,Email]);
+                    _ ->
+                      pgo:query("update users set email = $6::string, pass = $5::string, fname = $4:string, lname = $3::string, active = $2::boolean where id = $1::integer",[UserId,Active,Lname,Fname,Pass,Email])
+                  end
+              end
+          end
       end
   end.
 %  case pgo:query("update users set active = true where id = $1::integer",[UserId]) of
